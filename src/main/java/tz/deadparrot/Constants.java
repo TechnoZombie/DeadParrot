@@ -16,4 +16,6 @@ public class Constants {
     public static final String FILE_DOESNT_EXIST = "File does not exist.";
     public static final String SHUTTING_DOWN = "Shutting down DeadParrot...";
     public static final String SHUT_DOWN_COMPLETE = "DeadParrot is no more.";
+    public static final String RECORDING_INTERRUPTED = "Recording interrupted";
+    public static final String STOP_INTERRUPTED = "Interrupted while finalizing audio file.";
 }

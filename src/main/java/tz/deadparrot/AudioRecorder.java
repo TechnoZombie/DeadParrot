@@ -21,7 +21,7 @@ public class AudioRecorder {
     TargetDataLine targetLine;
     AudioInputStream recordingStream;
 
-    File outputFile = new File("tempRecord.wav");
+    File outputFile = new File(Constants.FILE_PATH);
 
     Thread audioRecorderThread;
 
@@ -40,7 +40,6 @@ public class AudioRecorder {
         targetLine.start();
 
         audioRecorderThread = new Thread(() -> {
-
             try {
                 AudioSystem.write(recordingStream, AudioFileFormat.Type.WAVE, outputFile);
             } catch (IOException e) {
@@ -56,13 +55,12 @@ public class AudioRecorder {
         targetLine.stop();
         targetLine.close();
 
-
         try {
             audioRecorderThread.join(); // ensure the file is fully written
             log.info(Constants.RECORDING_FINISHED);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.warn("Interrupted while finalizing audio file.");
+            log.warn(Constants.STOP_INTERRUPTED);
         }
     }
 

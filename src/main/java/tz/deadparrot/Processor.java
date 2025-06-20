@@ -36,7 +36,7 @@ public class Processor {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.warn("Recording interrupted");
+            log.warn(Constants.RECORDING_INTERRUPTED);
         }
         audioRecorder.stop();
         audioPlayer.play();
