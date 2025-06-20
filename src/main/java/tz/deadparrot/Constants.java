@@ -20,12 +20,7 @@ public class Constants {
     public static final String SHUT_DOWN_COMPLETE = "DeadParrot is no more.";
     public static final String RECORDING_INTERRUPTED = "Recording interrupted";
     public static final String STOP_INTERRUPTED = "Interrupted while finalizing audio file.";
-    public static final AudioFormat AUDIO_FORMAT = new AudioFormat(
-            AudioFormat.Encoding.PCM_SIGNED,
-            44100,
-            16,
-            2,
-            4,
-            44100,
-            false);
+
+    public static final String MAX_TIME_REACHED = "Recording stopped: Maximum time reached";
+    public static final String SILENCE_DETECTED = "Recording stopped: Silence detected";
 };

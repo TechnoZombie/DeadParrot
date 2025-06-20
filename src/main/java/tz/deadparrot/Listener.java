@@ -18,7 +18,7 @@ public class Listener extends Thread {
 
     @Override
     public void run() {
-        AudioFormat format = Constants.AUDIO_FORMAT;
+        AudioFormat format = DeadParrotConfigs.AUDIO_FORMAT;
 
 
         try {

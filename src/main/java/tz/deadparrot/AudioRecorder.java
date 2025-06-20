@@ -8,13 +8,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 public class AudioRecorder {
-    DataLine.Info dataInfo = new DataLine.Info(TargetDataLine.class, Constants.AUDIO_FORMAT);
+    DataLine.Info dataInfo = new DataLine.Info(TargetDataLine.class, DeadParrotConfigs.AUDIO_FORMAT);
     TargetDataLine recorderLine;
     AudioInputStream recordingStream;
 
     AudioPlayer audioPlayer = new AudioPlayer();
 
     File outputFile = new File(Constants.FILE_PATH);
+    File leadingPing = new File("resources/leadingPing.wav");
 
     Thread audioRecorderThread;
 
@@ -36,15 +37,10 @@ public class AudioRecorder {
         AtomicBoolean recordingActive = new AtomicBoolean(true);
         AtomicBoolean silenceDetected = new AtomicBoolean(false);
 
-        // Configuration for silence detection
-        final int SILENCE_THRESHOLD = 500; // Adjust based on your needs
-        final int SILENCE_DURATION_MS = 2000; // Stop after 2 seconds of silence
-        final int MAX_RECORDING_TIME_MS = 60000; // 60 seconds max
-
         audioRecorderThread = new Thread(() -> {
             try {
                 recordWithMonitoring(recordingStream, outputFile,
-                        SILENCE_THRESHOLD, SILENCE_DURATION_MS,
+                        DeadParrotConfigs.SILENCE_THRESHOLD, DeadParrotConfigs.SILENCE_DURATION_MS,
                         silenceDetected, recordingActive);
             } catch (IOException e) {
                 log.error(Constants.RECORDING_FAILED, e);
@@ -62,14 +58,14 @@ public class AudioRecorder {
                 Thread.sleep(100); // Check every 100ms
 
                 // Check if we've exceeded max recording time
-                if (System.currentTimeMillis() - startTime >= MAX_RECORDING_TIME_MS) {
-                    log.info("Recording stopped: Maximum time (60s) reached");
+                if (System.currentTimeMillis() - startTime >= DeadParrotConfigs.MAX_RECORDING_TIME_MS) {
+                    log.info(Constants.MAX_TIME_REACHED);
                     break;
                 }
             }
 
             if (silenceDetected.get()) {
-                log.info("Recording stopped: Silence detected");
+                log.info(Constants.SILENCE_DETECTED);
             }
 
         } catch (InterruptedException e) {
@@ -80,6 +76,7 @@ public class AudioRecorder {
         // Signal recording to stop
         recordingActive.set(false);
         stop();
+        audioPlayer.play(leadingPing);
         audioPlayer.play(outputFile);
     }
 
@@ -226,7 +223,7 @@ public class AudioRecorder {
         if (recorderLine != null && recorderLine.isOpen()) {
             recorderLine.close();
         }
-        // delete();
+        delete();
     }
 
     public void delete() {
