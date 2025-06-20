@@ -3,13 +3,13 @@ package tz.deadparrot;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.sound.sampled.*;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 public class AudioRecorder {
     DataLine.Info dataInfo = new DataLine.Info(TargetDataLine.class, Constants.AUDIO_FORMAT);
-    TargetDataLine targetLine;
+    TargetDataLine recorderLine;
     AudioInputStream recordingStream;
 
     AudioPlayer audioPlayer = new AudioPlayer();
@@ -23,40 +23,193 @@ public class AudioRecorder {
             log.error(Constants.LINE_NOT_SUPPORTED);
         }
 
-        targetLine = (TargetDataLine) AudioSystem.getLine(dataInfo);
-        recordingStream = new AudioInputStream(targetLine);
+        recorderLine = (TargetDataLine) AudioSystem.getLine(dataInfo);
+        recordingStream = new AudioInputStream(recorderLine);
         log.info(Constants.LINE_IN_STARTED);
     }
 
     public void record() throws LineUnavailableException {
-        targetLine.open();
-        targetLine.start();
+        recorderLine.open();
+        recorderLine.start();
+
+        // Flags for controlling recording
+        AtomicBoolean recordingActive = new AtomicBoolean(true);
+        AtomicBoolean silenceDetected = new AtomicBoolean(false);
+
+        // Configuration for silence detection
+        final int SILENCE_THRESHOLD = 500; // Adjust based on your needs
+        final int SILENCE_DURATION_MS = 2000; // Stop after 2 seconds of silence
+        final int MAX_RECORDING_TIME_MS = 60000; // 60 seconds max
 
         audioRecorderThread = new Thread(() -> {
             try {
-                AudioSystem.write(recordingStream, AudioFileFormat.Type.WAVE, outputFile);
+                recordWithMonitoring(recordingStream, outputFile,
+                        SILENCE_THRESHOLD, SILENCE_DURATION_MS,
+                        silenceDetected, recordingActive);
             } catch (IOException e) {
                 log.error(Constants.RECORDING_FAILED, e);
                 throw new RuntimeException(e);
             }
         });
+
         audioRecorderThread.start();
         log.info(Constants.RECORDING_STARTED);
-        // stop after 10 secs.
+
+        // Wait for either timeout or silence detection
+        long startTime = System.currentTimeMillis();
         try {
-            Thread.sleep(10000);
+            while (recordingActive.get() && !silenceDetected.get()) {
+                Thread.sleep(100); // Check every 100ms
+
+                // Check if we've exceeded max recording time
+                if (System.currentTimeMillis() - startTime >= MAX_RECORDING_TIME_MS) {
+                    log.info("Recording stopped: Maximum time (60s) reached");
+                    break;
+                }
+            }
+
+            if (silenceDetected.get()) {
+                log.info("Recording stopped: Silence detected");
+            }
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.warn(Constants.RECORDING_INTERRUPTED);
         }
+
+        // Signal recording to stop
+        recordingActive.set(false);
         stop();
         audioPlayer.play(outputFile);
+    }
 
+    private void recordWithMonitoring(AudioInputStream audioStream, File outputFile,
+                                      int silenceThreshold, int silenceDurationMs,
+                                      AtomicBoolean silenceDetected, AtomicBoolean recordingActive)
+            throws IOException {
+
+        AudioFormat format = audioStream.getFormat();
+        long lastSoundTime = System.currentTimeMillis();
+
+        // Manual recording with monitoring
+        try (FileOutputStream fos = new FileOutputStream(outputFile);
+             BufferedOutputStream bos = new BufferedOutputStream(fos)) {
+
+            // Write WAV header (simplified - you might want to use a proper WAV writer)
+            writeWavHeader(bos, format);
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            long totalBytesWritten = 0;
+
+            while (recordingActive.get() && (bytesRead = audioStream.read(buffer)) != -1) {
+                // Write audio data
+                bos.write(buffer, 0, bytesRead);
+                totalBytesWritten += bytesRead;
+
+                // Monitor audio level
+                double audioLevel = calculateAudioLevel(buffer, bytesRead, format);
+
+                if (audioLevel > silenceThreshold) {
+                    lastSoundTime = System.currentTimeMillis();
+                } else if (System.currentTimeMillis() - lastSoundTime >= silenceDurationMs) {
+                    silenceDetected.set(true);
+                    break;
+                }
+            }
+
+            // Update WAV header with actual data size
+            updateWavHeader(outputFile, totalBytesWritten);
+        }
+    }
+
+    private double calculateAudioLevel(byte[] buffer, int bytesRead, AudioFormat format) {
+        if (format.getSampleSizeInBits() == 16) {
+            // 16-bit audio
+            long sum = 0;
+            int sampleCount = 0;
+
+            for (int i = 0; i < bytesRead - 1; i += 2) {
+                short sample;
+                if (format.isBigEndian()) {
+                    sample = (short) ((buffer[i] << 8) | (buffer[i + 1] & 0xFF));
+                } else {
+                    sample = (short) ((buffer[i + 1] << 8) | (buffer[i] & 0xFF));
+                }
+                sum += Math.abs(sample);
+                sampleCount++;
+            }
+
+            return sampleCount > 0 ? (double) sum / sampleCount : 0;
+        } else if (format.getSampleSizeInBits() == 8) {
+            // 8-bit audio
+            long sum = 0;
+            for (int i = 0; i < bytesRead; i++) {
+                sum += Math.abs(buffer[i] - 128); // 8-bit is unsigned, center at 128
+            }
+            return bytesRead > 0 ? (double) sum / bytesRead : 0;
+        }
+
+        return 0; // Unsupported format
+    }
+
+    private void writeWavHeader(OutputStream out, AudioFormat format) throws IOException {
+        int sampleRate = (int) format.getSampleRate();
+        int channels = format.getChannels();
+        int bitsPerSample = format.getSampleSizeInBits();
+        int byteRate = sampleRate * channels * bitsPerSample / 8;
+        int blockAlign = channels * bitsPerSample / 8;
+
+        // WAV header (44 bytes)
+        out.write("RIFF".getBytes());
+        writeInt(out, 36); // File size - 8 (will be updated later)
+        out.write("WAVE".getBytes());
+        out.write("fmt ".getBytes());
+        writeInt(out, 16); // PCM header size
+        writeShort(out, 1); // PCM format
+        writeShort(out, channels);
+        writeInt(out, sampleRate);
+        writeInt(out, byteRate);
+        writeShort(out, blockAlign);
+        writeShort(out, bitsPerSample);
+        out.write("data".getBytes());
+        writeInt(out, 0); // Data size (will be updated later)
+    }
+
+    private void updateWavHeader(File file, long dataSize) throws IOException {
+        try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
+            // Update file size at offset 4
+            raf.seek(4);
+            writeInt(raf, (int) (dataSize + 36));
+
+            // Update data size at offset 40
+            raf.seek(40);
+            writeInt(raf, (int) dataSize);
+        }
+    }
+
+    private void writeInt(OutputStream out, int value) throws IOException {
+        out.write(value & 0xFF);
+        out.write((value >> 8) & 0xFF);
+        out.write((value >> 16) & 0xFF);
+        out.write((value >> 24) & 0xFF);
+    }
+
+    private void writeShort(OutputStream out, int value) throws IOException {
+        out.write(value & 0xFF);
+        out.write((value >> 8) & 0xFF);
+    }
+
+    private void writeInt(RandomAccessFile raf, int value) throws IOException {
+        raf.write(value & 0xFF);
+        raf.write((value >> 8) & 0xFF);
+        raf.write((value >> 16) & 0xFF);
+        raf.write((value >> 24) & 0xFF);
     }
 
     public void stop() {
-        targetLine.stop();
-        targetLine.close();
+        recorderLine.stop();
+        recorderLine.close();
 
         try {
             if (this.audioRecorderThread != null) {
@@ -70,10 +223,10 @@ public class AudioRecorder {
     }
 
     public void shutdown() {
-        if (targetLine != null && targetLine.isOpen()) {
-            targetLine.close();
+        if (recorderLine != null && recorderLine.isOpen()) {
+            recorderLine.close();
         }
-        delete();
+        // delete();
     }
 
     public void delete() {
