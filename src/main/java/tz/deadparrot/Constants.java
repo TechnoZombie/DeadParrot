@@ -14,4 +14,6 @@ public class Constants {
     public static final String LINE_UNAVAILABLE = "Line is Unavailable";
     public static final String RECORDING_FAILED = "Recording failed: ";
     public static final String FILE_DOESNT_EXIST = "File does not exist.";
+    public static final String SHUTTING_DOWN = "Shutting down DeadParrot...";
+    public static final String SHUT_DOWN_COMPLETE = "DeadParrot is no more.";
 }

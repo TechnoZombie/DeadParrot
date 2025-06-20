@@ -36,10 +36,6 @@ public class AudioRecorder {
         log.info(Constants.LINE_IN_STARTED);
     }
 
-    public void listener(){
-
-    }
-
     public void record() {
         targetLine.start();
 
@@ -70,4 +66,9 @@ public class AudioRecorder {
         }
     }
 
+    public void shutdown() {
+        if (targetLine != null && targetLine.isOpen()) {
+            targetLine.close();
+        }
+    }
 }
