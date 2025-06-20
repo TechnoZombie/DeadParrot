@@ -1,18 +1,18 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
-import tz.deadparrot.Constants;
 
 import javax.sound.sampled.*;
 import java.io.File;
 
 @Slf4j
 public class AudioPlayer {
+    File filePath;
 
     public void play() {
         Thread audioPlayerThread = new Thread(() -> {
             try {
-                File filePath = new File(Constants.FILE_PATH);
+                filePath = new File(Constants.FILE_PATH);
                 if (filePath.exists()) {
                     AudioInputStream audioInput = AudioSystem.getAudioInputStream(filePath);
                     Clip clip = AudioSystem.getClip();
@@ -54,6 +54,11 @@ public class AudioPlayer {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
 
+    public void delete() {
+        if (filePath.exists()) {
+            filePath.delete();
+        }
     }
 }

@@ -3,7 +3,6 @@ package tz.deadparrot;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.sound.sampled.LineUnavailableException;
-import java.util.Timer;
 
 @Slf4j
 public class Processor {
@@ -20,6 +19,14 @@ public class Processor {
             log.error(Constants.LINE_UNAVAILABLE, e);
             throw new RuntimeException(e);
         }
+
+        // Add shutdown hook for clean exit
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.info(Constants.SHUTTING_DOWN);
+            audioRecorder.shutdown();
+            audioPlayer.delete();
+            log.info(Constants.SHUT_DOWN_COMPLETE);
+        }));
 
         audioRecorder.record();
 
