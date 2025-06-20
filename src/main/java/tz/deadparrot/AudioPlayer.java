@@ -9,10 +9,11 @@ import java.io.File;
 public class AudioPlayer {
     File filePath;
 
-    public void play() {
+    public void play(File outputFile) {
         Thread audioPlayerThread = new Thread(() -> {
             try {
-                filePath = new File(Constants.FILE_PATH);
+                //filePath = new File(Constants.FILE_PATH);
+                this.filePath = outputFile;
                 if (filePath.exists()) {
                     AudioInputStream audioInput = AudioSystem.getAudioInputStream(filePath);
                     Clip clip = AudioSystem.getClip();
@@ -56,9 +57,5 @@ public class AudioPlayer {
         }
     }
 
-    public void delete() {
-        if (filePath.exists()) {
-            filePath.delete();
-        }
-    }
+
 }
