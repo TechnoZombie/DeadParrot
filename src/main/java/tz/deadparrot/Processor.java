@@ -21,8 +21,11 @@ public class Processor {
             throw new RuntimeException(e);
 
         }
-        listener = new Listener(audioRecorder);
-        listener.start();
+
+            listener = new Listener(audioRecorder);
+
+            listener.start();
+
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.info(Constants.SHUTTING_DOWN);

@@ -26,7 +26,7 @@ public class DeadParrotConfigs {
 
     // Configuration for silence detection
     static final int SILENCE_THRESHOLD = 500; // Adjust based on your needs
-    static final int SILENCE_DURATION_MS = 1500; // Stop after 1.5 seconds of silence
+    static final int SILENCE_DURATION_MS = 1000; // Stop after 1.0 seconds of silence
     static final int MAX_RECORDING_TIME_MS = 60000; // 60 seconds max
 
 

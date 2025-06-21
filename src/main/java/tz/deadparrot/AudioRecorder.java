@@ -1,6 +1,7 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
+import tz.deadparrot.utils.WaveWriterUtil;
 
 import javax.sound.sampled.*;
 import java.io.*;
@@ -11,13 +12,11 @@ public class AudioRecorder {
     DataLine.Info dataInfo = new DataLine.Info(TargetDataLine.class, DeadParrotConfigs.AUDIO_FORMAT);
     TargetDataLine recorderLine;
     AudioInputStream recordingStream;
-
     AudioPlayer audioPlayer = new AudioPlayer();
-
     File outputFile = new File(Constants.OUTPUT_FILE_PATH);
     File leadingPing = new File(Constants.LEADING_PING_FILE_PATH);
-
     Thread audioRecorderThread;
+    WaveWriterUtil waveWriterUtil = new WaveWriterUtil();
 
     public AudioRecorder() throws LineUnavailableException {
         if (!AudioSystem.isLineSupported(dataInfo)) {
@@ -93,7 +92,7 @@ public class AudioRecorder {
              BufferedOutputStream bos = new BufferedOutputStream(fos)) {
 
             // Write WAV header (simplified - you might want to use a proper WAV writer)
-            writeWavHeader(bos, format);
+            waveWriterUtil.startWriteWavHeader(bos, format);
 
             byte[] buffer = new byte[4096];
             int bytesRead;
@@ -116,7 +115,7 @@ public class AudioRecorder {
             }
 
             // Update WAV header with actual data size
-            updateWavHeader(outputFile, totalBytesWritten);
+            waveWriterUtil.startUpdateWavHeader(outputFile, totalBytesWritten);
         }
     }
 
@@ -150,59 +149,6 @@ public class AudioRecorder {
         return 0; // Unsupported format
     }
 
-    private void writeWavHeader(OutputStream out, AudioFormat format) throws IOException {
-        int sampleRate = (int) format.getSampleRate();
-        int channels = format.getChannels();
-        int bitsPerSample = format.getSampleSizeInBits();
-        int byteRate = sampleRate * channels * bitsPerSample / 8;
-        int blockAlign = channels * bitsPerSample / 8;
-
-        // WAV header (44 bytes)
-        out.write("RIFF".getBytes());
-        writeInt(out, 36); // File size - 8 (will be updated later)
-        out.write("WAVE".getBytes());
-        out.write("fmt ".getBytes());
-        writeInt(out, 16); // PCM header size
-        writeShort(out, 1); // PCM format
-        writeShort(out, channels);
-        writeInt(out, sampleRate);
-        writeInt(out, byteRate);
-        writeShort(out, blockAlign);
-        writeShort(out, bitsPerSample);
-        out.write("data".getBytes());
-        writeInt(out, 0); // Data size (will be updated later)
-    }
-
-    private void updateWavHeader(File file, long dataSize) throws IOException {
-        try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
-            // Update file size at offset 4
-            raf.seek(4);
-            writeInt(raf, (int) (dataSize + 36));
-
-            // Update data size at offset 40
-            raf.seek(40);
-            writeInt(raf, (int) dataSize);
-        }
-    }
-
-    private void writeInt(OutputStream out, int value) throws IOException {
-        out.write(value & 0xFF);
-        out.write((value >> 8) & 0xFF);
-        out.write((value >> 16) & 0xFF);
-        out.write((value >> 24) & 0xFF);
-    }
-
-    private void writeShort(OutputStream out, int value) throws IOException {
-        out.write(value & 0xFF);
-        out.write((value >> 8) & 0xFF);
-    }
-
-    private void writeInt(RandomAccessFile raf, int value) throws IOException {
-        raf.write(value & 0xFF);
-        raf.write((value >> 8) & 0xFF);
-        raf.write((value >> 16) & 0xFF);
-        raf.write((value >> 24) & 0xFF);
-    }
 
     public void stop() {
         recorderLine.stop();
