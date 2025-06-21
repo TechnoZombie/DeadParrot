@@ -1,10 +1,9 @@
 package tz.deadparrot;
 
-import javax.sound.sampled.AudioFormat;
-
 public class Constants {
 
-    public static final String FILE_PATH = "tempRecord.wav";
+    public static final String OUTPUT_FILE_PATH = "tempRecord.wav";
+    public static final String LEADING_PING_FILE_PATH = "src/main/resources/leadingPing.wav";
     public static final String LISTENING = "Listening for Audio...";
     public static final String SOUND_DETECTED = "Audio detected! ";
     public static final String RECORDING_STARTED = "Recording started...";
