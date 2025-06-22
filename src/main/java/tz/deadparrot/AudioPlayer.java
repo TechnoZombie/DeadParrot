@@ -24,6 +24,7 @@ public class AudioPlayer {
         Thread audioPlayerThread = new Thread(() -> {
             try {
                 this.filePath = outputFile;
+
                 if (filePath.exists()) {
                     AudioInputStream audioInput = AudioSystem.getAudioInputStream(filePath);
                     Clip clip = AudioSystem.getClip();

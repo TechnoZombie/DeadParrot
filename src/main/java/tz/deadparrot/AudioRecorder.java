@@ -12,7 +12,9 @@ public class AudioRecorder {
     DataLine.Info dataInfo = new DataLine.Info(TargetDataLine.class, DeadParrotConfigs.AUDIO_FORMAT);
     TargetDataLine recorderLine;
     AudioInputStream recordingStream;
+
     AudioPlayer audioPlayer = new AudioPlayer();
+
     File outputFile = new File(Constants.OUTPUT_FILE_PATH);
 
     Thread audioRecorderThread;
