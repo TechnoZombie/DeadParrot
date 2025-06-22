@@ -14,7 +14,7 @@ public class AudioRecorder {
     AudioInputStream recordingStream;
     AudioPlayer audioPlayer = new AudioPlayer();
     File outputFile = new File(Constants.OUTPUT_FILE_PATH);
-    File leadingPing = new File(Constants.LEADING_PING_FILE_PATH);
+
     Thread audioRecorderThread;
     WaveWriterUtil waveWriterUtil = new WaveWriterUtil();
 
@@ -75,7 +75,7 @@ public class AudioRecorder {
         // Signal recording to stop
         recordingActive.set(false);
         stop();
-        audioPlayer.play(leadingPing);
+        audioPlayer.playLeadingPing();
         audioPlayer.play(outputFile);
     }
 

@@ -3,7 +3,7 @@ package tz.deadparrot;
 public class Constants {
 
     public static final String OUTPUT_FILE_PATH = "tempRecord.wav";
-    public static final String LEADING_PING_FILE_PATH = "src/main/resources/leadingPing.wav";
+    public static final String LEADING_PING_FILE_PATH = "/leadingPing.wav";
     public static final String LISTENING = "Listening for Audio...";
     public static final String SOUND_DETECTED = "Audio detected! ";
     public static final String RECORDING_STARTED = "Recording started...";
@@ -19,7 +19,7 @@ public class Constants {
     public static final String SHUT_DOWN_COMPLETE = "DeadParrot is no more.";
     public static final String RECORDING_INTERRUPTED = "Recording interrupted";
     public static final String STOP_INTERRUPTED = "Interrupted while finalizing audio file.";
-
     public static final String MAX_TIME_REACHED = "Recording stopped: Maximum time reached";
     public static final String SILENCE_DETECTED = "Recording stopped: Silence detected";
+    public static final String ERROR_COPY_TO_TEMP = "Failed to copy resource to temp file";
 };

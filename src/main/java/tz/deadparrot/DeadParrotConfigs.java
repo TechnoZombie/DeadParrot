@@ -19,10 +19,18 @@ public class DeadParrotConfigs {
             44100,
             false);
 
+    /*
+     * Listener configs
+     */
+
+    // Sensitivity for sound detection
+    static final int SOUND_DETECTION_SENSITIVITY = 5000; //Default: 5000
 
     /*
      * AudioRecorder configs
      */
+
+    static final boolean KEEP_RECORDINGS = false; // Default: false
 
     // Configuration for silence detection
     static final int SILENCE_THRESHOLD = 500; // Adjust based on your needs
