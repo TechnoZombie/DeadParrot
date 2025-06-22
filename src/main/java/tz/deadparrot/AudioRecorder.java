@@ -21,7 +21,7 @@ public class AudioRecorder {
     TargetDataLine targetLine;
     AudioInputStream recordingStream;
 
-    File outputFile = new File(Constants.FILE_PATH);
+    File outputFile = new File(Constants.OUTPUT_FILE_PATH);
 
     Thread audioRecorderThread;
 

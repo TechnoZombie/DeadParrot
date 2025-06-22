@@ -12,7 +12,7 @@ public class AudioPlayer {
     public void play() {
         Thread audioPlayerThread = new Thread(() -> {
             try {
-                filePath = new File(Constants.FILE_PATH);
+                filePath = new File(Constants.OUTPUT_FILE_PATH);
                 if (filePath.exists()) {
                     AudioInputStream audioInput = AudioSystem.getAudioInputStream(filePath);
                     Clip clip = AudioSystem.getClip();
