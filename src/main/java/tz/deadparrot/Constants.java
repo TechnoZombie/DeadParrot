@@ -1,5 +1,7 @@
 package tz.deadparrot;
 
+import java.time.format.DateTimeFormatter;
+
 public class Constants {
 
     public static final String OUTPUT_FILE_PATH = "tempRecord.wav";
@@ -22,4 +24,8 @@ public class Constants {
     public static final String MAX_TIME_REACHED = "Recording stopped: Maximum time reached";
     public static final String SILENCE_DETECTED = "Recording stopped: Silence detected";
     public static final String ERROR_COPY_TO_TEMP = "Failed to copy resource to temp file";
+    public static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
+    public static final String FILENAME_PREFIX = "DeadParrot-recording_";
+    public static final String FILENAME_EXTENSION = ".wav";
+
 };

@@ -5,17 +5,19 @@ import tz.deadparrot.utils.WaveWriterUtil;
 
 import javax.sound.sampled.*;
 import java.io.*;
+import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 public class AudioRecorder {
-    DataLine.Info dataInfo = new DataLine.Info(TargetDataLine.class, DeadParrotConfigs.AUDIO_FORMAT);
+    DataLine.Info dataInfo = new DataLine.Info(TargetDataLine.class, Settings.AUDIO_FORMAT);
     TargetDataLine recorderLine;
     AudioInputStream recordingStream;
 
     AudioPlayer audioPlayer = new AudioPlayer();
 
-    File outputFile = new File(Constants.OUTPUT_FILE_PATH);
+    //  File outputFile = new File(Constants.OUTPUT_FILE_PATH);
+    File outputFile;
 
     Thread audioRecorderThread;
     WaveWriterUtil waveWriterUtil = new WaveWriterUtil();
@@ -31,6 +33,7 @@ public class AudioRecorder {
     }
 
     public void record() throws LineUnavailableException {
+        outputFileGenerator();
         recorderLine.open();
         recorderLine.start();
 
@@ -41,7 +44,7 @@ public class AudioRecorder {
         audioRecorderThread = new Thread(() -> {
             try {
                 recordWithMonitoring(recordingStream, outputFile,
-                        DeadParrotConfigs.SILENCE_THRESHOLD, DeadParrotConfigs.SILENCE_DURATION_MS,
+                        Settings.SILENCE_THRESHOLD, Settings.SILENCE_DURATION_MS,
                         silenceDetected, recordingActive);
             } catch (IOException e) {
                 log.error(Constants.RECORDING_FAILED, e);
@@ -59,7 +62,7 @@ public class AudioRecorder {
                 Thread.sleep(100); // Check every 100ms
 
                 // Check if we've exceeded max recording time
-                if (System.currentTimeMillis() - startTime >= DeadParrotConfigs.MAX_RECORDING_TIME_MS) {
+                if (System.currentTimeMillis() - startTime >= Settings.MAX_RECORDING_TIME_MS) {
                     log.info(Constants.MAX_TIME_REACHED);
                     break;
                 }
@@ -80,6 +83,16 @@ public class AudioRecorder {
         audioPlayer.playLeadingPing();
         audioPlayer.play(outputFile);
     }
+
+    private void outputFileGenerator() {
+        if (Settings.KEEP_RECORDINGS) {
+            String timestamp = LocalDateTime.now().format(Constants.TIMESTAMP_FORMAT);
+            outputFile = new File(Constants.FILENAME_PREFIX + timestamp + Constants.FILENAME_EXTENSION);
+        } else {
+            outputFile = new File(Constants.OUTPUT_FILE_PATH);
+        }
+    }
+
 
     private void recordWithMonitoring(AudioInputStream audioStream, File outputFile,
                                       int silenceThreshold, int silenceDurationMs,
@@ -175,7 +188,7 @@ public class AudioRecorder {
     }
 
     public void delete() {
-        if (outputFile.exists()) {
+        if (outputFile.exists() && !Settings.KEEP_RECORDINGS) {
             outputFile.delete();
         }
     }
