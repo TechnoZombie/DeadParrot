@@ -64,7 +64,7 @@ public class AudioPlayer {
                     log.error(Constants.FILE_DOESNT_EXIST);
                 }
             } catch (Exception e) {
-                log.error("Error during playback", e);
+                log.error(Constants.ERROR_DURING_PLAYBACK, e);
             }
         });
 

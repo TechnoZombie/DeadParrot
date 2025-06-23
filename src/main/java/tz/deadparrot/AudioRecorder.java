@@ -25,7 +25,7 @@ public class AudioRecorder {
 
         recorderLine = (TargetDataLine) AudioSystem.getLine(dataInfo);
         recordingStream = new AudioInputStream(recorderLine);
-        log.info(Constants.LINE_IN_STARTED);
+        log.info(Constants.LINE_IN_READY);
     }
 
     public void record() throws LineUnavailableException {
@@ -184,7 +184,7 @@ public class AudioRecorder {
     }
 
     public void delete() {
-        if (outputFile.exists() && !Settings.KEEP_RECORDINGS) {
+        if (outputFile != null && outputFile.exists() && !Settings.KEEP_RECORDINGS) {
             outputFile.delete();
         }
     }
