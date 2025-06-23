@@ -5,7 +5,8 @@ import java.time.format.DateTimeFormatter;
 public class Constants {
 
     // Processor
-    public static final String KEEP_RECORDINGS_IS_ON = "⚠️ KEEP_RECORDINGS IS ACTIVE IN SETTINGS. RECORDINGS WILL NOT BE DELETED! ⚠️";
+    public static final String SPY_MODE_IS_ON = "⚠️ SPY_MODE IS ON! RECORDING ONLY, NO PLAYBACK!️";
+    public static final String KEEP_RECORDINGS_IS_ON = "⚠️ KEEP_RECORDINGS IS ACTIVE IN SETTINGS. RECORDINGS WILL NOT BE DELETED!️";
     public static final String LINE_UNAVAILABLE = "Line is Unavailable";
     public static final String SHUTTING_DOWN = "Shutting down DeadParrot...";
     public static final String SHUT_DOWN_COMPLETE = "DeadParrot is no more.";

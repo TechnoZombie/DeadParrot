@@ -11,6 +11,11 @@ public class Processor {
 
     public void init() {
 
+        if (Settings.SPY_MODE){
+            Settings.KEEP_RECORDINGS = true;
+            log.warn(Constants.SPY_MODE_IS_ON);
+        }
+
         if (Settings.KEEP_RECORDINGS) {
             log.warn(Constants.KEEP_RECORDINGS_IS_ON);
         }

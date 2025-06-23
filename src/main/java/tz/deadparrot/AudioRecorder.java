@@ -76,8 +76,12 @@ public class AudioRecorder {
         // Signal recording to stop
         recordingActive.set(false);
         stop();
-        audioPlayer.playLeadingPing();
-        audioPlayer.play(outputFile);
+
+        // Play only if SPY_MODE is inactive
+        if (!Settings.SPY_MODE) {
+            audioPlayer.playLeadingPing();
+            audioPlayer.play(outputFile);
+        }
     }
 
     private void outputFileGenerator() {

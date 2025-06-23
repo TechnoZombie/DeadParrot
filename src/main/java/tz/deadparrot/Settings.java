@@ -30,8 +30,11 @@ public class Settings {
      * AudioRecorder settings
      */
 
+    // Spy mode: Audio recording ONLY
+    public static final boolean SPY_MODE = false; // Default: false
+
     // Keep all recordings
-    public static final boolean KEEP_RECORDINGS = false; // Default: false
+    public static boolean KEEP_RECORDINGS = false; // Default: false
 
     // Settings for silence detection
     static final int SILENCE_THRESHOLD = 500; // Default: 500. The higher the value more time it needs to be silent.
