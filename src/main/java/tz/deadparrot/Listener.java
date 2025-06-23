@@ -19,7 +19,7 @@ public class Listener extends Thread {
 
     @Override
     public void run() {
-        AudioFormat format = DeadParrotConfigs.AUDIO_FORMAT;
+        AudioFormat format = Settings.AUDIO_FORMAT;
         while (keepAlive) {
             try {
                 DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
@@ -64,7 +64,7 @@ public class Listener extends Thread {
     private boolean detectSound(byte[] audioData, int length) {
         for (int i = 0; i < length - 1; i += 2) {
             int sample = (audioData[i + 1] << 8) | (audioData[i] & 0xff);
-            if (Math.abs(sample) > DeadParrotConfigs.SOUND_DETECTION_SENSITIVITY) { // adjust this threshold if needed
+            if (Math.abs(sample) > Settings.SOUND_DETECTION_SENSITIVITY) { // adjust this threshold if needed
                 return true;
             }
         }
