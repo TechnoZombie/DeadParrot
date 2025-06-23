@@ -28,4 +28,5 @@ public class Constants {
     public static final String FILENAME_PREFIX = "DeadParrot-recording_";
     public static final String FILENAME_EXTENSION = ".wav";
     public static final String PLAYING_LEADING_PING = "Playing leading ping...";
+    public static final String ERROR_DURING_PLAYBACK = "Error during playback";
 };

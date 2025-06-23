@@ -21,65 +21,52 @@ public class AudioPlayer {
     }
 
     public void play(File fileToPlay) {
-        Thread audioPlayerThread = new Thread(() -> {
-            try {
-                this.filePath = fileToPlay;
-
-                if (filePath.exists()) {
-                    AudioInputStream audioInput = AudioSystem.getAudioInputStream(filePath);
-                    Clip clip = AudioSystem.getClip();
-                    clip.open(audioInput);
-
-                    Object playbackCompletedLock = new Object();
-
-                    clip.addLineListener(event -> {
-                        if (event.getType() == LineEvent.Type.STOP) {
-                            synchronized (playbackCompletedLock) {
-                                playbackCompletedLock.notify();
-                            }
-                        }
-                    });
-
-                    clip.start();
-
-                    // Log info based on what file is playing
-                    if (fileToPlay == leadingPing) {
-                        log.info(Constants.PLAYING_LEADING_PING);
-                    } else {
-                        log.info(Constants.PLAYBACK_STARTED);
-                    }
-
-                    synchronized (playbackCompletedLock) {
-                        playbackCompletedLock.wait();
-                    }
-
-                    clip.close();
-                    audioInput.close();
-
-                    // Only display info is file being played is recording
-                    if (fileToPlay != leadingPing) {
-                        log.info(Constants.PLAYBACK_FINISHED);
-                    }
-                } else {
-                    log.error(Constants.FILE_DOESNT_EXIST);
-                }
-            } catch (Exception e) {
-                log.error("Error during playback", e);
-            }
-        });
-
-        audioPlayerThread.start();
-
         try {
-            audioPlayerThread.join();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            if (!fileToPlay.exists()) {
+                log.error(Constants.FILE_DOESNT_EXIST);
+                return;
+            }
+
+            AudioInputStream audioInput = AudioSystem.getAudioInputStream(fileToPlay);
+            Clip clip = AudioSystem.getClip();
+            clip.open(audioInput);
+
+            Object playLock = new Object();
+
+            clip.addLineListener(event -> {
+                if (event.getType() == LineEvent.Type.STOP) {
+                    synchronized (playLock) {
+                        playLock.notify();
+                    }
+                }
+            });
+
+            clip.start();
+
+            // Log info based on what file is playing
+            if (fileToPlay == leadingPing) {
+                log.info(Constants.PLAYING_LEADING_PING);
+            } else {
+                log.info(Constants.PLAYBACK_STARTED);
+            }
+
+            synchronized (playLock) {
+                playLock.wait();
+            }
+
+            clip.close();
+            audioInput.close();
+
+            // Only display info is file being played is a recording
+            if (fileToPlay != leadingPing) {
+                log.info(Constants.PLAYBACK_FINISHED);
+            }
+        } catch (Exception e) {
+            log.error(Constants.ERROR_DURING_PLAYBACK, e);
         }
     }
 
     public void playLeadingPing() {
         play(leadingPing);
     }
-
-
 }
