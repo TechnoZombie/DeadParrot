@@ -31,7 +31,7 @@ public class Settings {
      */
 
     // Keep all recordings
-    public static final boolean KEEP_RECORDINGS = false; // Default: false
+    public static final boolean KEEP_RECORDINGS = true; // Default: false
 
     // Settings for silence detection
     static final int SILENCE_THRESHOLD = 500; // Default: 500. The higher the value more time it needs to be silent.
