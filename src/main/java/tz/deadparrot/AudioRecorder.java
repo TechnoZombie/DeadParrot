@@ -13,12 +13,8 @@ public class AudioRecorder {
     DataLine.Info dataInfo = new DataLine.Info(TargetDataLine.class, Settings.AUDIO_FORMAT);
     TargetDataLine recorderLine;
     AudioInputStream recordingStream;
-
     AudioPlayer audioPlayer = new AudioPlayer();
-
-    //  File outputFile = new File(Constants.OUTPUT_FILE_PATH);
     File outputFile;
-
     Thread audioRecorderThread;
     WaveWriterUtil waveWriterUtil = new WaveWriterUtil();
 

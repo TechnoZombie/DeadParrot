@@ -20,10 +20,10 @@ public class AudioPlayer {
         }
     }
 
-    public void play(File outputFile) {
+    public void play(File fileToPlay) {
         Thread audioPlayerThread = new Thread(() -> {
             try {
-                this.filePath = outputFile;
+                this.filePath = fileToPlay;
 
                 if (filePath.exists()) {
                     AudioInputStream audioInput = AudioSystem.getAudioInputStream(filePath);
@@ -41,7 +41,13 @@ public class AudioPlayer {
                     });
 
                     clip.start();
-                    log.info(Constants.PLAYBACK_STARTED);
+
+                    // Log info based on what file is playing
+                    if (fileToPlay == leadingPing) {
+                        log.info(Constants.PLAYING_LEADING_PING);
+                    } else {
+                        log.info(Constants.PLAYBACK_STARTED);
+                    }
 
                     synchronized (playbackCompletedLock) {
                         playbackCompletedLock.wait();
@@ -49,7 +55,11 @@ public class AudioPlayer {
 
                     clip.close();
                     audioInput.close();
-                    log.info(Constants.PLAYBACK_FINISHED);
+
+                    // Only display info is file being played is recording
+                    if (fileToPlay != leadingPing) {
+                        log.info(Constants.PLAYBACK_FINISHED);
+                    }
                 } else {
                     log.error(Constants.FILE_DOESNT_EXIST);
                 }

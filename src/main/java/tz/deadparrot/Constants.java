@@ -7,7 +7,7 @@ public class Constants {
     public static final String OUTPUT_FILE_PATH = "tempRecord.wav";
     public static final String LEADING_PING_FILE_PATH = "/leadingPing.wav";
     public static final String LISTENING = "Listening for Audio...";
-    public static final String SOUND_DETECTED = "Audio detected! ";
+    public static final String SOUND_DETECTED = "Audio detected!";
     public static final String RECORDING_STARTED = "Recording started...";
     public static final String RECORDING_FINISHED = "Recording finished!";
     public static final String PLAYBACK_STARTED = "Playback started...";
@@ -27,5 +27,5 @@ public class Constants {
     public static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
     public static final String FILENAME_PREFIX = "DeadParrot-recording_";
     public static final String FILENAME_EXTENSION = ".wav";
-
+    public static final String PLAYING_LEADING_PING = "Playing leading ping...";
 };
