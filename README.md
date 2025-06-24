@@ -1,4 +1,4 @@
-# 🦜 DeadParrot
+# ![Diagram](https://github.com/TechnoZombie/DeadParrot/blob/main/img/DeadParrotSmall.png?raw=true) DeadParrot
 
 **DeadParrot** is a Java-based audio repeater designed for use in amateur radio setups. It listens for audio input, records the audio for a defined period or until silence is detected, and then plays back the same recording — just like a parrot!
 
