@@ -1,6 +1,7 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
+import tz.deadparrot.utils.Printer;
 
 import javax.sound.sampled.LineUnavailableException;
 import java.nio.file.Files;
@@ -13,8 +14,9 @@ public class Processor {
     Listener listener;
 
     public void init() {
+        new Printer().printCurrentSettings();
 
-        if (Settings.SPY_MODE){
+        if (Settings.SPY_MODE) {
             Settings.KEEP_RECORDINGS = true;
             log.warn(Constants.SPY_MODE_IS_ON);
         } else {
