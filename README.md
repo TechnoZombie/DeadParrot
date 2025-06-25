@@ -13,6 +13,7 @@ This project mimics the behavior of a repeater station by automatically handling
 - 📁 **WAV File Output** – Saves recordings as standard `.wav` files.
 - 🔊 **Playback Support** – Plays back the recorded audio after a short leading "ping" sound.
 - 🧠 **Threaded Design** – Handles recording and playback on separate threads to ensure responsive performance.
+- 🕵️ **Spy Mode** – A silent monitoring mode that records transmissions without playing them back.
 
 ---
 
@@ -33,12 +34,14 @@ Configuration values such as:
 - `SILENCE_THRESHOLD`
 - `SOUND_DETECTION_SENSITIVITY`
 - `KEEP_RECORDINGS`
+- `SPY_MODE`
 
 You can customize:
 
 - The threshold for sound detection  
 - Max recording duration  
 - Whether to keep audio files or delete them after playback  
+- Whether Spy Mode is enabled (silent monitoring only)  
 
 ---
 
@@ -63,6 +66,8 @@ This project uses:
 3. After recording:
    - A "ping" sound is played (helps to trigger VOX on radios in time for the full file to be played back).
    - The recorded audio is played back through the computer audio output.
+   - *If Spy Mode is enabled, playback is skipped.*
+
 ---
 
 ## 🔄 Typical Use Case
@@ -72,12 +77,11 @@ This tool can be used as:
 - Amateur radio repeater - simplex
 - Channel monitoring
 - Parrot-style voice test setups  
+- Silent radio surveillance or logging with **Spy Mode**
 
 ---
 
 ## Future Enhancements
 
-- Monitoring Mode - Record incoming transmissions without playing back
 - Ability to manually set the line input
 - GUI - Graphic interface for ease of use
-
