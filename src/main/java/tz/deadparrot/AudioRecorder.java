@@ -87,9 +87,9 @@ public class AudioRecorder {
     private void outputFileGenerator() {
         if (Settings.KEEP_RECORDINGS) {
             String timestamp = LocalDateTime.now().format(Constants.TIMESTAMP_FORMAT);
-            outputFile = new File(Constants.FILENAME_PREFIX + timestamp + Constants.FILENAME_EXTENSION);
+            outputFile = new File(Constants.OUTPUT_FOLDER_PATH + Constants.FILENAME_PREFIX + timestamp + Constants.FILENAME_EXTENSION);
         } else {
-            outputFile = new File(Constants.OUTPUT_FILE_PATH);
+            outputFile = new File(Constants.OUTPUT_TEMP_FILE_NAME);
         }
     }
 

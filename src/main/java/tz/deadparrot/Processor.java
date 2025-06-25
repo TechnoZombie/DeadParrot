@@ -3,6 +3,9 @@ package tz.deadparrot;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.sound.sampled.LineUnavailableException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Slf4j
 public class Processor {
@@ -14,10 +17,13 @@ public class Processor {
         if (Settings.SPY_MODE){
             Settings.KEEP_RECORDINGS = true;
             log.warn(Constants.SPY_MODE_IS_ON);
+        } else {
+            log.info(Constants.RUNNING_IN_STANDARD_MODE);
         }
 
         if (Settings.KEEP_RECORDINGS) {
             log.warn(Constants.KEEP_RECORDINGS_IS_ON);
+            verifyAndCreateOutputFolder(Constants.OUTPUT_FOLDER_PATH);
         }
 
         try {
@@ -36,6 +42,20 @@ public class Processor {
             listener.shutdown();
             log.info(Constants.SHUT_DOWN_COMPLETE);
         }));
+    }
+
+    public static void verifyAndCreateOutputFolder(String dirPath) {
+        try {
+            Path path = Paths.get(dirPath);
+            if (!Files.exists(path)) {
+                Files.createDirectories(path);
+                log.info(Constants.CREATED_FOLDER);
+            } else {
+                log.info(Constants.FOLDER_EXISTS);
+            }
+        } catch (Exception e) {
+            log.error(Constants.ERROR_CREATING_FOLDER + e.getMessage());
+        }
     }
 }
 
