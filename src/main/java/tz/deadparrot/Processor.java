@@ -1,6 +1,7 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
+import tz.deadparrot.utils.ParrotQuotes;
 
 import javax.sound.sampled.LineUnavailableException;
 import java.nio.file.Files;
@@ -40,7 +41,7 @@ public class Processor {
             log.info(Constants.SHUTTING_DOWN);
             audioRecorder.shutdown();
             listener.shutdown();
-            log.info(Constants.SHUT_DOWN_COMPLETE);
+            log.info(ParrotQuotes.getRandomParrotLine());
         }));
     }
 
