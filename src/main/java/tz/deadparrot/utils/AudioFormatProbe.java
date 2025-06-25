@@ -4,6 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.sound.sampled.*;
 
+/**
+ * AudioFormatProbe
+ * Utility class that will return which audio formats the computer supports.
+ */
+
 @Slf4j
 public class AudioFormatProbe {
     public static void main(String[] args) {

@@ -6,13 +6,18 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * LeadingPingPreloader
+ * Preloads the leading ping sound to temp to avoid path issue when running from a .jar package.
+ */
+
 public class LeadingPingPreloader {
 
-    public File copyLeadingPingToTemp(String resourcePath) throws IOException {
+    public File copyLeadingPingToTemp() throws IOException {
         // Get the resource as an InputStream
-        InputStream inputStream = getClass().getResourceAsStream(resourcePath);
+        InputStream inputStream = getClass().getResourceAsStream(Constants.LEADING_PING_FILE_PATH);
         if (inputStream == null) {
-            throw new IOException(Constants.FILE_DOESNT_EXIST + ": " + resourcePath);
+            throw new IOException(Constants.FILE_DOESNT_EXIST + ": " + Constants.LEADING_PING_FILE_PATH);
         }
 
         // Create a temporary file

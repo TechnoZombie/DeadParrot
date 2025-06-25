@@ -10,11 +10,10 @@ import java.io.*;
 public class AudioPlayer {
     private File filePath;
     private File leadingPing;
-    LeadingPingPreloader preloader = new LeadingPingPreloader();
 
     public AudioPlayer() {
         try {
-            leadingPing = preloader.copyLeadingPingToTemp(Constants.LEADING_PING_FILE_PATH);
+            leadingPing = new LeadingPingPreloader().copyLeadingPingToTemp();
         } catch (IOException e) {
             log.error(Constants.ERROR_COPY_TO_TEMP, e);
         }
