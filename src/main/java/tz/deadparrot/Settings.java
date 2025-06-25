@@ -1,6 +1,7 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
+
 import javax.sound.sampled.AudioFormat;
 
 /**
@@ -61,4 +62,5 @@ public class Settings {
      * Default: 60000ms (60 seconds)
      */
     static final int MAX_RECORDING_TIME_MS = 60000;
+    static final boolean EASTEREGG = false;
 }

@@ -15,7 +15,7 @@ public class Processor {
 
     public void init() {
 
-        if (Settings.SPY_MODE){
+        if (Settings.SPY_MODE) {
             Settings.KEEP_RECORDINGS = true;
             log.warn(Constants.SPY_MODE_IS_ON);
         } else {
@@ -41,7 +41,11 @@ public class Processor {
             log.info(Constants.SHUTTING_DOWN);
             audioRecorder.shutdown();
             listener.shutdown();
-            log.info(ParrotQuotes.getRandomParrotLine());
+            if (Settings.EASTEREGG) {
+                log.info(ParrotQuotes.getRandomParrotLine());
+            } else {
+                log.info(Constants.SHUT_DOWN_COMPLETE);
+            }
         }));
     }
 
