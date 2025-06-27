@@ -1,19 +1,30 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
-import tz.deadparrot.utils.LeadingPingPreloader;
+import tz.deadparrot.utils.AudioResourcesPreloader;
 
 import javax.sound.sampled.*;
 import java.io.*;
+import java.util.Set;
 
 @Slf4j
 public class AudioPlayer {
     private File filePath;
     private File leadingPing;
+    private File marker;
 
     public AudioPlayer() {
+        AudioResourcesPreloader preloader = new AudioResourcesPreloader();
         try {
-            leadingPing = new LeadingPingPreloader().copyLeadingPingToTemp();
+            // Only preload leadingPing if neither marker mode nor spy mode is active
+            if (!Settings.MARKER_MODE && !Settings.SPY_MODE) {
+                leadingPing = preloader.copyLeadingPingToTemp();
+            }
+
+            // Preload marker only if marker mode is active
+            if (Settings.MARKER_MODE) {
+                marker = preloader.copyMarkerToTemp();
+            }
         } catch (IOException e) {
             log.error(Constants.ERROR_COPY_TO_TEMP, e);
         }
@@ -44,7 +55,10 @@ public class AudioPlayer {
                     // Log info based on what file is playing
                     if (fileToPlay == leadingPing) {
                         log.info(Constants.PLAYING_LEADING_PING);
+                    } else if (fileToPlay.equals(marker)) {
+                        // Do nothing
                     } else {
+                        // Optional: handle other files if needed
                         log.info(Constants.PLAYBACK_STARTED);
                     }
 
@@ -56,7 +70,7 @@ public class AudioPlayer {
                     audioInput.close();
 
                     // Only display info is file being played is recording
-                    if (fileToPlay != leadingPing) {
+                    if (!fileToPlay.equals(leadingPing) && !fileToPlay.equals(marker)) {
                         log.info(Constants.PLAYBACK_FINISHED);
                     }
                 } else {
@@ -80,5 +94,7 @@ public class AudioPlayer {
         play(leadingPing);
     }
 
-
+    public void playMarker() {
+        play(marker);
+    }
 }

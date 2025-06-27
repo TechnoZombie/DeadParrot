@@ -16,6 +16,7 @@ public class Constants {
     public static final String SPY_MODE_IS_ON = "⚠️ SPY_MODE IS ON! RECORDING ONLY, NO PLAYBACK!️";
     public static final String ERROR_CREATING_FOLDER = "Error creating directory: ";
     public static final String RUNNING_IN_STANDARD_MODE = "DeadParrot Mode: STANDARD.";
+    public static final String RUNNING_IN_MARKER_MODE = "DeadParrot Mode: MARKER ONLY.";
 
     // AudioRecorder
     public static final String LINE_IN_READY = "Line-In Ready.";
@@ -36,6 +37,7 @@ public class Constants {
     public static final String ERROR_COPY_TO_TEMP = "Failed to copy resource to temp file";
     public static final String FILE_DOESNT_EXIST = "File does not exist.";
     public static final String LEADING_PING_FILE_PATH = "/leadingPing.wav";
+    public static final String MARKER_FILE_PATH = "/Marker.wav";
     public static final String PLAYBACK_STARTED = "Playback started...";
     public static final String PLAYBACK_FINISHED = "Playback finished!";
     public static final String PLAYING_LEADING_PING = "Playing leading ping...";
@@ -46,4 +48,6 @@ public class Constants {
     public static final String SOUND_DETECTED = "Audio detected!";
     public static final String LINE_NOT_SUPPORTED = "Line not supported.";
 
+
+    public static final String MARKER_COUNT = "Marker count: ";
 };
