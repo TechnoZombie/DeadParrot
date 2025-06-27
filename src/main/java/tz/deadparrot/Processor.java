@@ -12,14 +12,39 @@ public class Processor {
     private Listener listener;
 
     public void init() {
-        if (Settings.MARKER_MODE) {
-            runMarkerMode();
-            return;
-        }
-
-        configureSettings();
+        applySettings();
         initializeComponents();
         setupShutdownHook();
+    }
+
+    private void applySettings() {
+
+        if (Settings.SPY_MODE) {
+            Settings.KEEP_RECORDINGS = true;
+            Settings.MARKER_MODE = false;
+            log.warn(Constants.SPY_MODE_IS_ON);
+        }
+        if (Settings.MARKER_MODE) {
+            runMarkerMode();
+        } else if (!Settings.SPY_MODE && !Settings.MARKER_MODE) {
+            log.info(Constants.RUNNING_IN_STANDARD_MODE);
+        }
+        if (Settings.KEEP_RECORDINGS) {
+            log.warn(Constants.KEEP_RECORDINGS_IS_ON);
+            FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_FOLDER_PATH);
+        }
+    }
+
+    private void initializeComponents() {
+        try {
+            audioRecorder = new AudioRecorder();
+        } catch (LineUnavailableException e) {
+            log.error(Constants.LINE_UNAVAILABLE, e);
+            throw new RuntimeException(e);
+        }
+
+        listener = new Listener(audioRecorder);
+        listener.start();
     }
 
     private void runMarkerMode() {
@@ -43,40 +68,19 @@ public class Processor {
         }
     }
 
-    private void configureSettings() {
-        if (Settings.SPY_MODE) {
-            Settings.KEEP_RECORDINGS = true;
-            log.warn(Constants.SPY_MODE_IS_ON);
-        } else {
-            log.info(Constants.RUNNING_IN_STANDARD_MODE);
-        }
-
-        if (Settings.KEEP_RECORDINGS) {
-            log.warn(Constants.KEEP_RECORDINGS_IS_ON);
-            FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_FOLDER_PATH);
-        }
-    }
-
-    private void initializeComponents() {
-        try {
-            audioRecorder = new AudioRecorder();
-        } catch (LineUnavailableException e) {
-            log.error(Constants.LINE_UNAVAILABLE, e);
-            throw new RuntimeException(e);
-        }
-
-        listener = new Listener(audioRecorder);
-        listener.start();
-    }
-
     private void setupShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
     private void shutdown() {
         log.info(Constants.SHUTTING_DOWN);
-        if (audioRecorder != null) audioRecorder.shutdown();
-        if (listener != null) listener.shutdown();
+        if (audioRecorder != null) {
+            audioRecorder.shutdown();
+        }
+
+        if (listener != null) {
+            listener.shutdown();
+        }
 
         logShutdownMessage();
     }

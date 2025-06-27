@@ -44,7 +44,7 @@ public class Settings {
      * Default: 50000ms (5 minutes)
      */
 
-    public static final boolean MARKER_MODE = false;
+    public static boolean MARKER_MODE = false;
     public static final int MARKER_TIME = 50000;
 
     /**

@@ -5,6 +5,7 @@ import tz.deadparrot.utils.AudioResourcesPreloader;
 
 import javax.sound.sampled.*;
 import java.io.*;
+import java.util.Set;
 
 @Slf4j
 public class AudioPlayer {
@@ -15,8 +16,15 @@ public class AudioPlayer {
     public AudioPlayer() {
         AudioResourcesPreloader preloader = new AudioResourcesPreloader();
         try {
-            leadingPing = preloader.copyLeadingPingToTemp();
-            marker = preloader.copyMarkerToTemp();
+            // Only preload leadingPing if neither marker mode nor spy mode is active
+            if (!Settings.MARKER_MODE && !Settings.SPY_MODE) {
+                leadingPing = preloader.copyLeadingPingToTemp();
+            }
+
+            // Preload marker only if marker mode is active
+            if (Settings.MARKER_MODE) {
+                marker = preloader.copyMarkerToTemp();
+            }
         } catch (IOException e) {
             log.error(Constants.ERROR_COPY_TO_TEMP, e);
         }
