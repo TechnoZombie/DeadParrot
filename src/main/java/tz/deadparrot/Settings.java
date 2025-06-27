@@ -19,6 +19,7 @@ public class Settings {
     public static final AudioFormat AUDIO_FORMAT = new AudioFormat(
             AudioFormat.Encoding.PCM_SIGNED, 44100, 16, 2, 4, 44100, false);
 
+
     // Sound Detection Settings
 
     /**
@@ -35,6 +36,16 @@ public class Settings {
      * Default: false
      */
     public static final boolean SPY_MODE = false;
+
+    /**
+     * When true, enables marker mode (only plays audio marker, no other features).
+     * Default: false
+     * MARKER_TIME sets how far apart markers are played
+     * Default: 50000ms (5 minutes)
+     */
+
+    public static final boolean MARKER_MODE = true;
+    public static final int MARKER_TIME = 2000;
 
     /**
      * When true, all recordings are kept permanently.
