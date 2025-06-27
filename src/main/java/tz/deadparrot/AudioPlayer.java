@@ -5,13 +5,14 @@ import tz.deadparrot.utils.AudioResourcesPreloader;
 
 import javax.sound.sampled.*;
 import java.io.*;
-import java.util.Set;
 
 @Slf4j
 public class AudioPlayer {
     private File filePath;
     private File leadingPing;
-    private File marker;
+    private File markerFile;
+    private Thread audioPlayerThread;
+
 
     public AudioPlayer() {
         AudioResourcesPreloader preloader = new AudioResourcesPreloader();
@@ -22,8 +23,8 @@ public class AudioPlayer {
             }
 
             // Preload marker only if marker mode is active
-            if (Settings.MARKER_MODE) {
-                marker = preloader.copyMarkerToTemp();
+            if (Settings.MARKER_MODE || Settings.PLAY_MARKER) {
+                markerFile = preloader.copyMarkerToTemp();
             }
         } catch (IOException e) {
             log.error(Constants.ERROR_COPY_TO_TEMP, e);
@@ -31,7 +32,7 @@ public class AudioPlayer {
     }
 
     public void play(File fileToPlay) {
-        Thread audioPlayerThread = new Thread(() -> {
+        audioPlayerThread = new Thread(() -> {
             try {
                 this.filePath = fileToPlay;
 
@@ -55,7 +56,7 @@ public class AudioPlayer {
                     // Log info based on what file is playing
                     if (fileToPlay == leadingPing) {
                         log.info(Constants.PLAYING_LEADING_PING);
-                    } else if (fileToPlay.equals(marker)) {
+                    } else if (fileToPlay.equals(markerFile)) {
                         // Do nothing
                     } else {
                         // Optional: handle other files if needed
@@ -70,7 +71,7 @@ public class AudioPlayer {
                     audioInput.close();
 
                     // Only display info is file being played is recording
-                    if (!fileToPlay.equals(leadingPing) && !fileToPlay.equals(marker)) {
+                    if (!fileToPlay.equals(leadingPing) && !fileToPlay.equals(markerFile)) {
                         log.info(Constants.PLAYBACK_FINISHED);
                     }
                 } else {
@@ -90,11 +91,30 @@ public class AudioPlayer {
         }
     }
 
+    public void stopAndDelete() {
+        try {
+            if (audioPlayerThread != null && audioPlayerThread.isAlive()) {
+                log.info("Waiting for audio playback to finish before deleting marker.");
+                audioPlayerThread.join();  // Wait until file is no longer in use
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        if (markerFile != null && markerFile.exists()) {
+            if (markerFile.delete()) {
+                log.info("Marker file deleted successfully.");
+            } else {
+                log.warn("Failed to delete marker file.");
+            }
+        }
+    }
+
     public void playLeadingPing() {
         play(leadingPing);
     }
 
     public void playMarker() {
-        play(marker);
+        play(markerFile);
     }
 }

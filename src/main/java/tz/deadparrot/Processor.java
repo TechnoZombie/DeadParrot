@@ -1,10 +1,12 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
+import tz.deadparrot.utils.AudioResourcesPreloader;
 import tz.deadparrot.utils.FileUtils;
 import tz.deadparrot.utils.ParrotQuotes;
 
 import javax.sound.sampled.LineUnavailableException;
+import java.io.IOException;
 
 @Slf4j
 public class Processor {
@@ -15,6 +17,12 @@ public class Processor {
         applySettings();
         initializeComponents();
         setupShutdownHook();
+
+        try {
+            new AudioResourcesPreloader().copyMarkerToTemp();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void applySettings() {
@@ -25,13 +33,14 @@ public class Processor {
             log.warn(Constants.SPY_MODE_IS_ON);
         }
         if (Settings.MARKER_MODE) {
-            runMarkerMode();
+            new AudioMarker().runMarkerMode(this);
         } else if (!Settings.SPY_MODE && !Settings.MARKER_MODE) {
             log.info(Constants.RUNNING_IN_STANDARD_MODE);
         }
         if (Settings.KEEP_RECORDINGS) {
             log.warn(Constants.KEEP_RECORDINGS_IS_ON);
             FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_FOLDER_PATH);
+
         }
     }
 
@@ -47,26 +56,6 @@ public class Processor {
         listener.start();
     }
 
-    private void runMarkerMode() {
-        int procCounter = 0;
-        log.info(Constants.RUNNING_IN_MARKER_MODE);
-        AudioPlayer player = new AudioPlayer();
-
-        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownMarkerMode));
-
-        while (!Thread.currentThread().isInterrupted()) {
-            procCounter++;
-            log.info(Constants.MARKER_COUNT + procCounter);
-            player.playMarker();
-
-            try {
-                Thread.sleep(Settings.MARKER_TIME);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-    }
 
     private void setupShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
@@ -85,12 +74,9 @@ public class Processor {
         logShutdownMessage();
     }
 
-    private void shutdownMarkerMode() {
-        log.info(Constants.SHUTTING_DOWN);
-        logShutdownMessage();
-    }
 
-    private void logShutdownMessage() {
+
+    protected void logShutdownMessage() {
         if (Settings.EASTEREGG) {
             log.info(ParrotQuotes.getRandomParrotLine());
         } else {
