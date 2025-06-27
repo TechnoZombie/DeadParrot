@@ -1,3 +1,5 @@
+package tz.deadparrot.utils;
+
 import javax.sound.sampled.*;
 
 /**
