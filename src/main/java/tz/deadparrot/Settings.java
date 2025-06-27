@@ -20,6 +20,7 @@ public class Settings {
             AudioFormat.Encoding.PCM_SIGNED, 44100, 16, 2, 4, 44100, false);
 
 
+
     // Sound Detection Settings
 
     /**
@@ -29,7 +30,8 @@ public class Settings {
      */
     static final int SOUND_DETECTION_SENSITIVITY = 5000;
 
-    // Recording Behavior Settings
+    // Operation Modes
+    // Default: Standard - SPY_MODE = false && MARKER_MODE = false
 
     /**
      * When true, enables spy mode (audio recording only, no other features).
@@ -43,9 +45,14 @@ public class Settings {
      * MARKER_TIME sets how far apart markers are played
      * Default: 50000ms (5 minutes)
      */
+    public static boolean MARKER_MODE = true;
+    public static final int MARKER_TIME = 5000;
+    public static final String MARKER_ENABLED = "Marker is Enabled at " + MARKER_TIME + "ms interval";
 
-    public static boolean MARKER_MODE = false;
-    public static final int MARKER_TIME = 50000;
+    public static final boolean PLAY_MARKER = false;
+    public static final int PLAY_MARKER_FREQUENCY = 5000;
+
+    // Recording Behavior Settings
 
     /**
      * When true, all recordings are kept permanently.
