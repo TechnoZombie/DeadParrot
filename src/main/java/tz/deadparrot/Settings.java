@@ -27,6 +27,9 @@ public class Settings {
 
     // Operation Modes
     // Default: Standard - SPY_MODE = false && MARKER_MODE = false
+
+    public static final boolean OPEN_WINDOWS_RECORDING_SETTINGS = true;
+
     /**
      * When true, enables spy mode (audio recording only, no other features).
      * Default: false
@@ -70,5 +73,5 @@ public class Settings {
      * Default: 60000ms (60 seconds)
      */
     public static final int MAX_RECORDING_TIME_MS = 60000;
-    public static final boolean EASTEREGG = false;
+    public static final boolean EASTER_EGG = true;
 }

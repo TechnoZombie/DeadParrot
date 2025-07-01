@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import tz.deadparrot.utils.AudioResourcesPreloader;
 import tz.deadparrot.utils.FileUtils;
 import tz.deadparrot.utils.ParrotQuotes;
+import tz.deadparrot.utils.SoundSettingsOpener;
 
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
@@ -32,15 +33,20 @@ public class Processor {
             Settings.MARKER_MODE = false;
             log.warn(Constants.SPY_MODE_IS_ON);
         }
+
         if (Settings.MARKER_MODE) {
             new AudioMarker().runMarkerMode(this);
         } else if (!Settings.SPY_MODE && !Settings.MARKER_MODE) {
             log.info(Constants.RUNNING_IN_STANDARD_MODE);
         }
+
         if (Settings.KEEP_RECORDINGS) {
             log.warn(Constants.KEEP_RECORDINGS_IS_ON);
             FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_FOLDER_PATH);
 
+        }
+        if (Settings.OPEN_WINDOWS_RECORDING_SETTINGS) {
+            SoundSettingsOpener.openRecordingSettings();
         }
     }
 
@@ -75,9 +81,8 @@ public class Processor {
     }
 
 
-
     protected void logShutdownMessage() {
-        if (Settings.EASTEREGG) {
+        if (Settings.EASTER_EGG) {
             log.info(ParrotQuotes.getRandomParrotLine());
         } else {
             log.info(Constants.SHUT_DOWN_COMPLETE);

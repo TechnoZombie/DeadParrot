@@ -15,6 +15,8 @@ public class Constants {
     public static final String SHUT_DOWN_COMPLETE = "[OFF]: DeadParrot is no more.";
     public static final String SPY_MODE_IS_ON = "⚠️ SPY_MODE IS ON! RECORDING ONLY, NO PLAYBACK!️";
     public static final String ERROR_CREATING_FOLDER = "Error creating directory: ";
+    public static final String OPENED_WINDOWS_RECORDING_SETTINGS = "Opened Windows Sound Settings - Recording";
+    public static final String FAILED_TO_OPEN_REC_SETTINGS = "Failed to Open Sound Settings: ";
     public static final String RUNNING_IN_STANDARD_MODE = "DeadParrot Mode: STANDARD.";
     public static final String RUNNING_IN_MARKER_MODE = "DeadParrot Mode: MARKER ONLY.";
 
@@ -42,12 +44,11 @@ public class Constants {
     public static final String PLAYBACK_FINISHED = "Playback finished!";
     public static final String PLAYING_LEADING_PING = "Playing leading ping...";
     public static final String ERROR_DURING_PLAYBACK = "Error during playback";
+    public static final String MARKER_COUNT = "Marker count: ";
 
     // Listener
     public static final String LISTENING = "Listening for Audio...";
     public static final String SOUND_DETECTED = "Audio detected!";
     public static final String LINE_NOT_SUPPORTED = "Line not supported.";
 
-
-    public static final String MARKER_COUNT = "Marker count: ";
 };
