@@ -42,7 +42,11 @@ public class Processor {
 
         if (Settings.KEEP_RECORDINGS) {
             log.warn(Constants.KEEP_RECORDINGS_IS_ON);
-            FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_FOLDER_PATH);
+            if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
+                FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_FOLDER_DESKTOP_PATH);
+            } else {
+                FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_FOLDER_PATH);
+            }
 
         }
         if (Settings.OPEN_WINDOWS_RECORDING_SETTINGS) {

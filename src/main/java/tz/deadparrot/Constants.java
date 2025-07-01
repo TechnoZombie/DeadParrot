@@ -24,6 +24,7 @@ public class Constants {
     public static final String LINE_IN_READY = "Line-In Ready.";
     public static final String OUTPUT_TEMP_FILE_NAME = "tempRecord.wav";
     public static final String OUTPUT_FOLDER_PATH = "Recordings/";
+    public static final String OUTPUT_FOLDER_DESKTOP_PATH = System.getProperty("user.home") + "\\Desktop\\Recordings\\";
     public static final String FILENAME_PREFIX = "DeadParrot-recording_";
     public static final String FILENAME_EXTENSION = ".wav";
     public static final String RECORDING_STARTED = "Recording started...";

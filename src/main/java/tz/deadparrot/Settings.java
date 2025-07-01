@@ -53,7 +53,8 @@ public class Settings {
      * When true, all recordings are kept permanently.
      * Default: false
      */
-    public static boolean KEEP_RECORDINGS = false;
+    public static boolean KEEP_RECORDINGS = true;
+    public static boolean SAVE_RECORDINGS_TO_DESKTOP = true;
 
     // Silence Detection Settings
     /**
