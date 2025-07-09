@@ -5,30 +5,44 @@ import tz.deadparrot.Constants;
 
 import java.io.IOException;
 
+import static tz.deadparrot.utils.FileUtils.detectOS;
+
 @Slf4j
 public class SoundSettingsOpener {
+    public static String operatingSystem;
 
     /**
-     * Opens Windows Sound Settings directly to the Recording tab
+     * Opens Sound Settings directly to the Recording tab
      */
     public static void openRecordingSettings() {
-        try {
-            // Method 1: Direct to Recording tab (Windows 10/11)
-            ProcessBuilder pb = new ProcessBuilder("ms-settings:sound-devices");
-            pb.start();
 
-        } catch (IOException e) {
-            // Fallback method: Open classic Sound control panel
+
+        if (operatingSystem.equals(Constants.WINDOWS_OS)) {
             try {
-                ProcessBuilder fallback = new ProcessBuilder("control", "mmsys.cpl,,1");
-                fallback.start();
-                log.info(Constants.OPENED_WINDOWS_RECORDING_SETTINGS);
-
-            } catch (IOException fallbackException) {
-                log.error(Constants.FAILED_TO_OPEN_REC_SETTINGS + fallbackException.getMessage());
+                new ProcessBuilder("ms-settings:sound-devices").start();
+            } catch (IOException e) {
+                try {
+                    new ProcessBuilder("control", "mmsys.cpl,,1").start();
+                    log.info(Constants.OPENED_WINDOWS_RECORDING_SETTINGS);
+                } catch (IOException fallbackException) {
+                    log.error(Constants.FAILED_TO_OPEN_REC_SETTINGS + fallbackException.getMessage());
+                }
+            }
+        } else if (operatingSystem.equals(Constants.LINUX_OS)) {
+            try {
+                // Try GNOME
+                new ProcessBuilder("gnome-control-center", "sound").start();
+            } catch (IOException gnomeFail) {
+                try {
+                    // Try PulseAudio control
+                    new ProcessBuilder("pavucontrol").start();
+                } catch (IOException pulseFail) {
+                    log.error("Could not open Linux recording settings: " + pulseFail.getMessage());
+                }
             }
         }
     }
+
 
     /**
      * Alternative method using rundll32 (more reliable for older Windows versions)

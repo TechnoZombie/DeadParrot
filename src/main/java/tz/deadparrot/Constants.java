@@ -1,7 +1,5 @@
 package tz.deadparrot;
 
-import org.slf4j.Marker;
-
 import java.time.format.DateTimeFormatter;
 
 public class Constants {
@@ -24,7 +22,9 @@ public class Constants {
     public static final String LINE_IN_READY = "Line-In Ready.";
     public static final String OUTPUT_TEMP_FILE_NAME = "tempRecord.wav";
     public static final String OUTPUT_FOLDER_PATH = "Recordings/";
-    public static final String OUTPUT_FOLDER_DESKTOP_PATH = System.getProperty("user.home") + "\\Desktop\\Recordings\\";
+    public static String OUTPUT_DESKTOP_FOLDER_PATH;
+    public static final String WINDOWS_DESKTOP_PATH = System.getProperty("user.home") + "\\Desktop\\Recordings\\";
+    public static final String LINUX_DESKTOP_PATH = System.getProperty("user.home") + "/Desktop/Recordings/";
     public static final String FILENAME_PREFIX = "DeadParrot-recording_";
     public static final String FILENAME_EXTENSION = ".wav";
     public static final String RECORDING_STARTED = "Recording started...";
@@ -55,5 +55,6 @@ public class Constants {
     // FileUtils
     public static final String WINDOWS_OS = "windows";
     public static final String LINUX_OS = "linux";
-    public static final String RUNNING_LINUX = "[INFO] Running on Linux. Bypassing Windows-related settings";
+    public static final String RUNNING_LINUX = "[INFO] Running on Linux OS. Setting Desktop path.";
+    public static final String RUNNING_WINDOWS = "[INFO] Running on Windows OS. Setting Desktop path.";
 };

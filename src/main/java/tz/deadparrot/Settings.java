@@ -32,7 +32,7 @@ public class Settings {
      * When true, opens Windows sound recording settings.
      * Default: false
      */
-    public static boolean OPEN_WINDOWS_RECORDING_SETTINGS = true;
+    public static boolean OPEN_OS_RECORDING_SETTINGS = true;
 
     /**
      * When true, enables spy mode (audio recording only, no other features).

@@ -88,7 +88,7 @@ public class AudioRecorder {
         if (Settings.KEEP_RECORDINGS) {
             String timestamp = LocalDateTime.now().format(Constants.TIMESTAMP_FORMAT);
             if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
-                outputFile = new File(Constants.OUTPUT_FOLDER_DESKTOP_PATH +
+                outputFile = new File(Constants.OUTPUT_DESKTOP_FOLDER_PATH +
                         Constants.FILENAME_PREFIX + timestamp +
                         Constants.FILENAME_EXTENSION);
             } else {

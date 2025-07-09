@@ -27,7 +27,7 @@ public class Processor {
     }
 
     private void applySettings() {
-        FileUtils.detectOS();
+        SoundSettingsOpener.operatingSystem = FileUtils.detectOS().toString().toLowerCase();
 
         if (Settings.SPY_MODE) {
             Settings.KEEP_RECORDINGS = true;
@@ -44,13 +44,13 @@ public class Processor {
         if (Settings.KEEP_RECORDINGS) {
             log.warn(Constants.KEEP_RECORDINGS_IS_ON);
             if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
-                FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_FOLDER_DESKTOP_PATH);
+                FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_DESKTOP_FOLDER_PATH);
             } else {
                 FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_FOLDER_PATH);
             }
 
         }
-        if (Settings.OPEN_WINDOWS_RECORDING_SETTINGS) {
+        if (Settings.OPEN_OS_RECORDING_SETTINGS) {
             SoundSettingsOpener.openRecordingSettings();
         }
     }
