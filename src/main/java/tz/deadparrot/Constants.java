@@ -52,4 +52,8 @@ public class Constants {
     public static final String SOUND_DETECTED = "Audio detected!";
     public static final String LINE_NOT_SUPPORTED = "Line not supported.";
 
+    // FileUtils
+    public static final String WINDOWS_OS = "windows";
+    public static final String LINUX_OS = "linux";
+    public static final String RUNNING_LINUX = "[INFO] Running on Linux. Bypassing Windows-related settings";
 };

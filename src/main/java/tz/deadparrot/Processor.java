@@ -27,6 +27,7 @@ public class Processor {
     }
 
     private void applySettings() {
+        FileUtils.detectOS();
 
         if (Settings.SPY_MODE) {
             Settings.KEEP_RECORDINGS = true;
