@@ -24,23 +24,18 @@ public class FileUtils {
         }
     }
 
-    public enum OS {
-        LINUX, WINDOWS, OTHER
-    }
-
-    public static OS detectOS() {
+    public static void detectOS() {
         String osName = System.getProperty("os.name").toLowerCase();
         if (osName.contains(Constants.LINUX_OS)) {
             log.info(Constants.RUNNING_LINUX);
+            Constants.IS_LINUX = true;
             Constants.OUTPUT_DESKTOP_FOLDER_PATH = Constants.LINUX_DESKTOP_PATH;
-            return OS.LINUX;
         } else if (osName.contains(Constants.WINDOWS_OS)) {
             log.info(Constants.RUNNING_WINDOWS);
+            Constants.IS_WINDOWS = true;
             Constants.OUTPUT_DESKTOP_FOLDER_PATH = Constants.WINDOWS_DESKTOP_PATH;
-            return OS.WINDOWS;
         } else {
             Settings.SAVE_RECORDINGS_TO_DESKTOP = false;
-            return OS.OTHER;
         }
     }
 }

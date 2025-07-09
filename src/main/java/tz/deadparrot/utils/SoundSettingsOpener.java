@@ -5,30 +5,26 @@ import tz.deadparrot.Constants;
 
 import java.io.IOException;
 
-import static tz.deadparrot.utils.FileUtils.detectOS;
-
 @Slf4j
 public class SoundSettingsOpener {
-    public static String operatingSystem;
 
     /**
      * Opens Sound Settings directly to the Recording tab
      */
     public static void openRecordingSettings() {
 
-
-        if (operatingSystem.equals(Constants.WINDOWS_OS)) {
+        if (Constants.IS_WINDOWS) {
             try {
                 new ProcessBuilder("ms-settings:sound-devices").start();
             } catch (IOException e) {
                 try {
                     new ProcessBuilder("control", "mmsys.cpl,,1").start();
-                    log.info(Constants.OPENED_WINDOWS_RECORDING_SETTINGS);
+                    log.info(Constants.OPENED_OS_RECORDING_SETTINGS);
                 } catch (IOException fallbackException) {
                     log.error(Constants.FAILED_TO_OPEN_REC_SETTINGS + fallbackException.getMessage());
                 }
             }
-        } else if (operatingSystem.equals(Constants.LINUX_OS)) {
+        } else if (Constants.IS_LINUX) {
             try {
                 // Try GNOME
                 new ProcessBuilder("gnome-control-center", "sound").start();
@@ -43,7 +39,6 @@ public class SoundSettingsOpener {
         }
     }
 
-
     /**
      * Alternative method using rundll32 (more reliable for older Windows versions)
      */
@@ -52,7 +47,7 @@ public class SoundSettingsOpener {
             // Opens the classic Sound control panel directly to Recording tab
             ProcessBuilder pb = new ProcessBuilder("rundll32.exe", "shell32.dll,Control_RunDLL", "mmsys.cpl,,1");
             pb.start();
-            log.info(Constants.OPENED_WINDOWS_RECORDING_SETTINGS);
+            log.info(Constants.OPENED_OS_RECORDING_SETTINGS);
 
         } catch (IOException e) {
             log.error(Constants.FAILED_TO_OPEN_REC_SETTINGS + e.getMessage());
@@ -66,7 +61,7 @@ public class SoundSettingsOpener {
         try {
             ProcessBuilder pb = new ProcessBuilder("ms-settings:sound");
             pb.start();
-            log.info(Constants.OPENED_WINDOWS_RECORDING_SETTINGS);
+            log.info(Constants.OPENED_OS_RECORDING_SETTINGS);
 
         } catch (IOException e) {
             log.error(Constants.FAILED_TO_OPEN_REC_SETTINGS + e.getMessage());

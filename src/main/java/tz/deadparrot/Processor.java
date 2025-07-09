@@ -15,6 +15,7 @@ public class Processor {
     private Listener listener;
 
     public void init() {
+        FileUtils.detectOS();
         applySettings();
         initializeComponents();
         setupShutdownHook();
@@ -27,7 +28,6 @@ public class Processor {
     }
 
     private void applySettings() {
-        SoundSettingsOpener.operatingSystem = FileUtils.detectOS().toString().toLowerCase();
 
         if (Settings.SPY_MODE) {
             Settings.KEEP_RECORDINGS = true;

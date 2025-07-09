@@ -29,7 +29,7 @@ public class Settings {
     // Default: Standard - SPY_MODE = false && MARKER_MODE = false
 
     /**
-     * When true, opens Windows sound recording settings.
+     * When true, opens OS sound recording settings.
      * Default: false
      */
     public static boolean OPEN_OS_RECORDING_SETTINGS = true;
@@ -78,5 +78,5 @@ public class Settings {
      * Default: 60000ms (60 seconds)
      */
     public static final int MAX_RECORDING_TIME_MS = 60000;
-    public static final boolean EASTER_EGG = true;
+    public static final boolean EASTER_EGG = false;
 }
