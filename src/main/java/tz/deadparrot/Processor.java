@@ -72,7 +72,7 @@ public class Processor {
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
-    private void shutdown() {
+    void shutdown() {
         log.info(Constants.SHUTTING_DOWN);
         if (audioRecorder != null) {
             audioRecorder.shutdown();

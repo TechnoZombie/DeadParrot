@@ -2,6 +2,8 @@ package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
 
+import javax.swing.*;
+
 /**
  * DeadParrot Ham Radio Repeater
  *
@@ -12,7 +14,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class Main {
     public static void main(String[] args) {
-        Processor processor = new Processor();
-        processor.init();
+        if (args.length > 0 && args[0].equals("--gui")) {
+            SwingUtilities.invokeLater(() -> new DeadParrotGUI().setVisible(true));
+        } else {
+            Processor processor = new Processor();
+            processor.init();
+        }
     }
 }
