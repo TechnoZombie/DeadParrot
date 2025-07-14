@@ -14,11 +14,6 @@ import javax.swing.*;
 @Slf4j
 public class Main {
     public static void main(String[] args) {
-        if (args.length > 0 && args[0].equals("--gui")) {
-            SwingUtilities.invokeLater(() -> new DeadParrotGUI().setVisible(true));
-        } else {
-            Processor processor = new Processor();
-            processor.init();
-        }
+        SwingUtilities.invokeLater(() -> new DeadParrotGUI().setVisible(true));
     }
 }

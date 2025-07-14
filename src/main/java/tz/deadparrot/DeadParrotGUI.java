@@ -5,10 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -20,13 +17,13 @@ import org.slf4j.LoggerFactory;
 
 @Slf4j
 public class DeadParrotGUI extends JFrame {
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+    // GUI components
     private JTextArea consoleOutput;
     private JButton startButton;
     private JButton stopButton;
-    private JScrollPane scrollPane;
-    private GuiLogAppender guiLogAppender;
 
-    // Toggle switches for various options
     private JCheckBox spyModeEnabled;
     private JCheckBox markerModeEnabled;
     private JCheckBox keepRecordingsEnabled;
@@ -34,15 +31,15 @@ public class DeadParrotGUI extends JFrame {
     private JCheckBox openOSSettingsEnabled;
     private JCheckBox easterEggEnabled;
 
-    // Status indicators
     private JLabel statusLabel;
     private JLabel recordingStatusLabel;
     private JLabel listenerStatusLabel;
 
-    // Program state
+    // Runtime state
     private boolean isRunning = false;
     private Processor processor;
     private Thread processorThread;
+    private GuiLogAppender guiLogAppender;
 
     public DeadParrotGUI() {
         initializeGUI();
@@ -55,8 +52,8 @@ public class DeadParrotGUI extends JFrame {
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setSize(900, 650);
         setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
 
-        // Handle window closing
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -64,29 +61,16 @@ public class DeadParrotGUI extends JFrame {
             }
         });
 
-        // Create main layout
-        setLayout(new BorderLayout());
-
-        // Create top panel with controls
-        JPanel topPanel = createControlPanel();
-        add(topPanel, BorderLayout.NORTH);
-
-        // Create console output area
-        JPanel consolePanel = createConsolePanel();
-        add(consolePanel, BorderLayout.CENTER);
-
-        // Create status bar
-        JPanel statusPanel = createStatusPanel();
-        add(statusPanel, BorderLayout.SOUTH);
+        add(createControlPanel(), BorderLayout.NORTH);
+        add(createConsolePanel(), BorderLayout.CENTER);
+        add(createStatusPanel(), BorderLayout.SOUTH);
     }
 
     private void setupLogAppender() {
-        // Create and configure the custom log appender
         guiLogAppender = new GuiLogAppender();
         guiLogAppender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
         guiLogAppender.start();
 
-        // Add appender to root logger
         Logger rootLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         rootLogger.addAppender(guiLogAppender);
     }
@@ -95,7 +79,6 @@ public class DeadParrotGUI extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(new TitledBorder("Repeater Controls"));
 
-        // Start/Stop buttons panel
         JPanel buttonPanel = new JPanel(new FlowLayout());
         startButton = new JButton("START");
         stopButton = new JButton("STOP");
@@ -109,17 +92,18 @@ public class DeadParrotGUI extends JFrame {
         stopButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
         stopButton.setEnabled(false);
 
-        startButton.addActionListener(new StartButtonListener());
-        stopButton.addActionListener(new StopButtonListener());
+        startButton.addActionListener(e -> {
+            if (!isRunning) startRepeater();
+        });
+
+        stopButton.addActionListener(e -> {
+            if (isRunning) stopRepeater();
+        });
 
         buttonPanel.add(startButton);
         buttonPanel.add(stopButton);
-
         panel.add(buttonPanel, BorderLayout.NORTH);
-
-        // Options panel
-        JPanel optionsPanel = createOptionsPanel();
-        panel.add(optionsPanel, BorderLayout.CENTER);
+        panel.add(createOptionsPanel(), BorderLayout.CENTER);
 
         return panel;
     }
@@ -131,7 +115,6 @@ public class DeadParrotGUI extends JFrame {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.anchor = GridBagConstraints.WEST;
 
-        // Initialize toggle switches based on your Settings class
         spyModeEnabled = new JCheckBox("Spy Mode");
         markerModeEnabled = new JCheckBox("Marker Mode");
         keepRecordingsEnabled = new JCheckBox("Keep Recordings");
@@ -139,7 +122,6 @@ public class DeadParrotGUI extends JFrame {
         openOSSettingsEnabled = new JCheckBox("Open OS Recording Settings");
         easterEggEnabled = new JCheckBox("Easter Egg");
 
-        // Add tooltips for better UX
         spyModeEnabled.setToolTipText("Enable spy mode - automatically enables keep recordings and disables marker mode");
         markerModeEnabled.setToolTipText("Enable marker mode for audio marking");
         keepRecordingsEnabled.setToolTipText("Keep recorded audio files");
@@ -147,7 +129,6 @@ public class DeadParrotGUI extends JFrame {
         openOSSettingsEnabled.setToolTipText("Open OS recording settings on startup");
         easterEggEnabled.setToolTipText("Enable Easter egg messages");
 
-        // Add action listeners to update settings and log changes
         spyModeEnabled.addActionListener(e -> {
             updateSettings();
             logToConsole("Spy Mode: " + spyModeEnabled.isSelected());
@@ -187,7 +168,6 @@ public class DeadParrotGUI extends JFrame {
             logToConsole("Easter Egg: " + easterEggEnabled.isSelected());
         });
 
-        // Layout components
         gbc.gridx = 0; gbc.gridy = 0;
         panel.add(spyModeEnabled, gbc);
         gbc.gridx = 1;
@@ -217,16 +197,16 @@ public class DeadParrotGUI extends JFrame {
         consoleOutput.setLineWrap(true);
         consoleOutput.setWrapStyleWord(true);
 
-        scrollPane = new JScrollPane(consoleOutput);
+        JScrollPane scrollPane = new JScrollPane(consoleOutput);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         scrollPane.setPreferredSize(new Dimension(850, 350));
 
         panel.add(scrollPane, BorderLayout.CENTER);
 
-        // Add clear console button
-        JPanel buttonPanel = new JPanel(new FlowLayout());
         JButton clearButton = new JButton("Clear Console");
         clearButton.addActionListener(e -> consoleOutput.setText(""));
+
+        JPanel buttonPanel = new JPanel(new FlowLayout());
         buttonPanel.add(clearButton);
 
         panel.add(buttonPanel, BorderLayout.SOUTH);
@@ -254,63 +234,18 @@ public class DeadParrotGUI extends JFrame {
     }
 
     private void logToConsole(String message) {
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-        String logEntry = "[" + timestamp + "] " + message + "\n";
-
+        String timestamp = LocalDateTime.now().format(TIME_FORMATTER);
         SwingUtilities.invokeLater(() -> {
-            consoleOutput.append(logEntry);
+            consoleOutput.append("[" + timestamp + "] " + message + "\n");
             consoleOutput.setCaretPosition(consoleOutput.getDocument().getLength());
         });
     }
 
-    private void loadCurrentSettings() {
-        // Load current settings from your Settings class
-        spyModeEnabled.setSelected(Settings.SPY_MODE);
-        markerModeEnabled.setSelected(Settings.MARKER_MODE);
-        keepRecordingsEnabled.setSelected(Settings.KEEP_RECORDINGS);
-        saveToDesktopEnabled.setSelected(Settings.SAVE_RECORDINGS_TO_DESKTOP);
-        openOSSettingsEnabled.setSelected(Settings.OPEN_OS_RECORDING_SETTINGS);
-        easterEggEnabled.setSelected(Settings.EASTER_EGG);
-
-        logToConsole("Settings loaded from configuration");
-    }
-
-    private void updateSettings() {
-        // Update your Settings class with current GUI values
-        Settings.SPY_MODE = spyModeEnabled.isSelected();
-        Settings.MARKER_MODE = markerModeEnabled.isSelected();
-        Settings.KEEP_RECORDINGS = keepRecordingsEnabled.isSelected();
-        Settings.SAVE_RECORDINGS_TO_DESKTOP = saveToDesktopEnabled.isSelected();
-        Settings.OPEN_OS_RECORDING_SETTINGS = openOSSettingsEnabled.isSelected();
-        Settings.EASTER_EGG = easterEggEnabled.isSelected();
-    }
-
-    private class StartButtonListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (!isRunning) {
-                startRepeater();
-            }
-        }
-    }
-
-    private class StopButtonListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (isRunning) {
-                stopRepeater();
-            }
-        }
-    }
-
     private void startRepeater() {
-        // Update settings before starting
         updateSettings();
 
         try {
             processor = new Processor();
-
-            // Run processor in separate thread to avoid blocking GUI
             processorThread = new Thread(() -> {
                 try {
                     processor.init();
@@ -340,7 +275,6 @@ public class DeadParrotGUI extends JFrame {
     }
 
     private void stopRepeater() {
-
         try {
             if (processor != null) {
                 processor.shutdown();
@@ -381,15 +315,33 @@ public class DeadParrotGUI extends JFrame {
                 cleanup();
                 System.exit(0);
             }
-            // CANCEL_OPTION or closed dialog - do nothing
         } else {
             cleanup();
             System.exit(0);
         }
     }
 
+    private void loadCurrentSettings() {
+        spyModeEnabled.setSelected(Settings.SPY_MODE);
+        markerModeEnabled.setSelected(Settings.MARKER_MODE);
+        keepRecordingsEnabled.setSelected(Settings.KEEP_RECORDINGS);
+        saveToDesktopEnabled.setSelected(Settings.SAVE_RECORDINGS_TO_DESKTOP);
+        openOSSettingsEnabled.setSelected(Settings.OPEN_OS_RECORDING_SETTINGS);
+        easterEggEnabled.setSelected(Settings.EASTER_EGG);
+
+        logToConsole("Settings loaded from configuration");
+    }
+
+    private void updateSettings() {
+        Settings.SPY_MODE = spyModeEnabled.isSelected();
+        Settings.MARKER_MODE = markerModeEnabled.isSelected();
+        Settings.KEEP_RECORDINGS = keepRecordingsEnabled.isSelected();
+        Settings.SAVE_RECORDINGS_TO_DESKTOP = saveToDesktopEnabled.isSelected();
+        Settings.OPEN_OS_RECORDING_SETTINGS = openOSSettingsEnabled.isSelected();
+        Settings.EASTER_EGG = easterEggEnabled.isSelected();
+    }
+
     private void cleanup() {
-        // Remove the log appender
         if (guiLogAppender != null) {
             Logger rootLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
             rootLogger.detachAppender(guiLogAppender);
@@ -397,31 +349,23 @@ public class DeadParrotGUI extends JFrame {
         }
     }
 
-    // Method to allow external logging to the GUI console
     public void logMessage(String message) {
         logToConsole(message);
     }
 
-    // Custom log appender to redirect SLF4J logs to GUI
     private class GuiLogAppender extends AppenderBase<ILoggingEvent> {
         @Override
         protected void append(ILoggingEvent event) {
-            // Format the log message
             String logLevel = event.getLevel().toString();
             String loggerName = event.getLoggerName();
             String message = event.getFormattedMessage();
 
-            // Simplify logger name for display
             String simpleName = loggerName.substring(loggerName.lastIndexOf('.') + 1);
-
-            // Create formatted log entry
             String logEntry = String.format("[%s] %s - %s", logLevel, simpleName, message);
+            String timestamp = LocalDateTime.now().format(TIME_FORMATTER);
 
-            // Add to GUI console
             SwingUtilities.invokeLater(() -> {
-                String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-                String fullEntry = "[" + timestamp + "] " + logEntry + "\n";
-                consoleOutput.append(fullEntry);
+                consoleOutput.append("[" + timestamp + "] " + logEntry + "\n");
                 consoleOutput.setCaretPosition(consoleOutput.getDocument().getLength());
             });
         }
@@ -432,10 +376,9 @@ public class DeadParrotGUI extends JFrame {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e) {
-                log.error("Failed to set look and feel", e);
+                if (log != null) log.error("Failed to set look and feel", e);
             }
-
-            new tz.deadparrot.DeadParrotGUI().setVisible(true);
+            new DeadParrotGUI().setVisible(true);
         });
     }
 }
