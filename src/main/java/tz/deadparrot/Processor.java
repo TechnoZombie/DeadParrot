@@ -17,8 +17,6 @@ public class Processor {
 
     public void init() {
 
-        new Printer().printCurrentSettings();
-
         FileUtils.detectOS();
         applySettings();
         initializeComponents();
@@ -56,6 +54,10 @@ public class Processor {
         }
         if (Settings.OPEN_OS_RECORDING_SETTINGS) {
             SoundSettingsOpener.openRecordingSettings();
+        }
+
+        if(Settings.PRINT_SETTINGS) {
+            new Printer().printCurrentSettings();
         }
     }
 

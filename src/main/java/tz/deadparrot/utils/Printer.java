@@ -13,6 +13,7 @@ public class Printer {
                 "Audio Format", Settings.AUDIO_FORMAT.toString(),
                 "Sound Detection Sensitivity", Settings.SOUND_DETECTION_SENSITIVITY,
                 "Spy Mode", Settings.SPY_MODE,
+                "Marker Mode", Settings.MARKER_MODE,
                 "Keep Recordings", Settings.KEEP_RECORDINGS,
                 "Silence Threshold", Settings.SILENCE_THRESHOLD,
                 "Silence Duration (ms)", Settings.SILENCE_DURATION_MS,
