@@ -87,12 +87,19 @@ public class AudioRecorder {
     private void outputFileGenerator() {
         if (Settings.KEEP_RECORDINGS) {
             String timestamp = LocalDateTime.now().format(Constants.TIMESTAMP_FORMAT);
-            outputFile = new File(Constants.OUTPUT_FOLDER_PATH + Constants.FILENAME_PREFIX + timestamp + Constants.FILENAME_EXTENSION);
+            if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
+                outputFile = new File(Constants.OUTPUT_DESKTOP_FOLDER_PATH +
+                        Constants.FILENAME_PREFIX + timestamp +
+                        Constants.FILENAME_EXTENSION);
+            } else {
+                outputFile = new File(Constants.OUTPUT_FOLDER_PATH +
+                        Constants.FILENAME_PREFIX + timestamp +
+                        Constants.FILENAME_EXTENSION);
+            }
         } else {
             outputFile = new File(Constants.OUTPUT_TEMP_FILE_NAME);
         }
     }
-
 
     private void recordWithMonitoring(AudioInputStream audioStream, File outputFile,
                                       int silenceThreshold, int silenceDurationMs,

@@ -12,16 +12,13 @@ import javax.sound.sampled.AudioFormat;
 public class Settings {
 
     // Audio Format Configuration
-
     /**
      * Standard audio format used throughout the application.
      * Default: PCM signed, 44.1kHz, 16-bit, stereo.
      */
-    public static final AudioFormat AUDIO_FORMAT = new AudioFormat(
-            AudioFormat.Encoding.PCM_SIGNED, 44100, 16, 2, 4, 44100, false);
+    public static final AudioFormat AUDIO_FORMAT = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 44100, 16, 2, 4, 44100, false);
 
     // Sound Detection Settings
-
     /**
      * Sensitivity threshold for sound detection.
      * Higher values make detection less sensitive.
@@ -29,7 +26,14 @@ public class Settings {
      */
     public static final int SOUND_DETECTION_SENSITIVITY = 5000;
 
-    // Recording Behavior Settings
+    // Operation Modes
+    // Default: Standard - SPY_MODE = false && MARKER_MODE = false
+
+    /**
+     * When true, opens OS sound recording settings.
+     * Default: false
+     */
+    public static boolean OPEN_OS_RECORDING_SETTINGS = true;
 
     /**
      * When true, enables spy mode (audio recording only, no other features).
@@ -38,13 +42,26 @@ public class Settings {
     public static final boolean SPY_MODE = false;
 
     /**
+     * When true, enables marker mode (only plays audio marker, no other features).
+     * Default: false
+     * MARKER_TIME sets how far apart markers are played
+     * Default: 50000ms (5 minutes)
+     */
+    public static boolean MARKER_MODE = false;
+    public static final int MARKER_TIME = 50000;
+    public static final String MARKER_ENABLED = "Marker is Enabled at " + MARKER_TIME + "ms interval";
+    public static final boolean PLAY_MARKER = false;
+    public static final int PLAY_MARKER_FREQUENCY = 5000;
+
+    // Recording Behavior Settings
+    /**
      * When true, all recordings are kept permanently.
      * Default: false
      */
-    public static boolean KEEP_RECORDINGS = false;
+    public static boolean KEEP_RECORDINGS = true;
+    public static boolean SAVE_RECORDINGS_TO_DESKTOP = true;
 
     // Silence Detection Settings
-
     /**
      * Amplitude threshold below which audio is considered silence.
      * Higher values require more quiet audio to trigger silence detection.
@@ -63,4 +80,6 @@ public class Settings {
      * Default: 60000ms (60 seconds)
      */
     public static final int MAX_RECORDING_TIME_MS = 60000;
+    public static final boolean EASTER_EGG = false;
+
 }
