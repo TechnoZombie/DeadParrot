@@ -86,6 +86,5 @@ public class Settings {
      * Default: 60000ms (60 seconds)
      */
     public static final int MAX_RECORDING_TIME_MS = 60000;
-    public static final boolean EASTER_EGG = false;
-
+    public static boolean EASTER_EGG = false;
 }
