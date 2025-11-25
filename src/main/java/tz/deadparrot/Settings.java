@@ -1,5 +1,6 @@
 package tz.deadparrot;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.sound.sampled.AudioFormat;
@@ -23,7 +24,7 @@ public class Settings {
      * Higher values make detection less sensitive.
      * Default: 5000
      */
-    static final int SOUND_DETECTION_SENSITIVITY = 5000;
+    public static final int SOUND_DETECTION_SENSITIVITY = 5000;
 
     // Operation Modes
     // Default: Standard - SPY_MODE = false && MARKER_MODE = false
@@ -67,6 +68,7 @@ public class Settings {
      * Default: 500
      */
     public static final int SILENCE_THRESHOLD = 500;
+
     /**
      * Duration of continuous silence required before stopping recording.
      * Default: 1000ms (1 second)
@@ -79,4 +81,5 @@ public class Settings {
      */
     public static final int MAX_RECORDING_TIME_MS = 60000;
     public static final boolean EASTER_EGG = false;
+
 }

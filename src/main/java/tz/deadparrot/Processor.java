@@ -1,6 +1,7 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
+import tz.deadparrot.utils.Printer;
 import tz.deadparrot.utils.AudioResourcesPreloader;
 import tz.deadparrot.utils.FileUtils;
 import tz.deadparrot.utils.ParrotQuotes;
@@ -15,6 +16,9 @@ public class Processor {
     private Listener listener;
 
     public void init() {
+
+        new Printer().printCurrentSettings();
+
         FileUtils.detectOS();
         applySettings();
         initializeComponents();
