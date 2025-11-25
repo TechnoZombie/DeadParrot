@@ -15,7 +15,8 @@ public class Settings {
      * Standard audio format used throughout the application.
      * Default: PCM signed, 44.1kHz, 16-bit, stereo.
      */
-    public static final AudioFormat AUDIO_FORMAT = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 44100, 16, 2, 4, 44100, false);
+    public static final AudioFormat AUDIO_FORMAT = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
+            44100, 16, 2, 4, 44100, false);
 
     // Sound Detection Settings
     /**
@@ -23,10 +24,16 @@ public class Settings {
      * Higher values make detection less sensitive.
      * Default: 5000
      */
-    static final int SOUND_DETECTION_SENSITIVITY = 5000;
+    public static final int SOUND_DETECTION_SENSITIVITY = 5000;
 
     // Operation Modes
     // Default: Standard - SPY_MODE = false && MARKER_MODE = false
+
+    /**
+     *  Prints full settings to console on boot
+     *  Default: false
+     */
+    public static final boolean PRINT_SETTINGS = false;
 
     /**
      * When true, opens OS sound recording settings.
@@ -67,6 +74,7 @@ public class Settings {
      * Default: 500
      */
     public static final int SILENCE_THRESHOLD = 500;
+
     /**
      * Duration of continuous silence required before stopping recording.
      * Default: 1000ms (1 second)
@@ -78,5 +86,6 @@ public class Settings {
      * Default: 60000ms (60 seconds)
      */
     public static final int MAX_RECORDING_TIME_MS = 60000;
-    public static boolean EASTER_EGG = false;
+    public static final boolean EASTER_EGG = false;
+
 }

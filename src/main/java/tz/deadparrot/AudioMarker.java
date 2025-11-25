@@ -12,6 +12,7 @@ public class AudioMarker {
         this.subProcessor = processor;
         int procCounter = 0;
         log.info(Constants.RUNNING_IN_MARKER_MODE);
+        log.info(Settings.MARKER_ENABLED);
         player = new AudioPlayer();
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownMarkerMode));
