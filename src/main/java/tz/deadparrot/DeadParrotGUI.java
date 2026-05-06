@@ -15,6 +15,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import org.slf4j.LoggerFactory;
 
+import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.FlatDarculaLaf;
+
 @Slf4j
 public class DeadParrotGUI extends JFrame {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -30,6 +33,7 @@ public class DeadParrotGUI extends JFrame {
     private JCheckBox saveToDesktopEnabled;
     private JCheckBox openOSSettingsEnabled;
     private JCheckBox easterEggEnabled;
+    private JCheckBox darkModeEnabled;
 
     private JLabel statusLabel;
     private JLabel recordingStatusLabel;
@@ -79,17 +83,10 @@ public class DeadParrotGUI extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(new TitledBorder("Repeater Controls"));
 
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-        startButton = new JButton("START");
-        stopButton = new JButton("STOP");
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        startButton = new JButton("▶ START");
+        stopButton = new JButton("■ STOP");
 
-        startButton.setBackground(new Color(76, 175, 80));
-        startButton.setForeground(Color.WHITE);
-        startButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
-
-        stopButton.setBackground(new Color(244, 67, 54));
-        stopButton.setForeground(Color.WHITE);
-        stopButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
         stopButton.setEnabled(false);
 
         startButton.addActionListener(e -> {
@@ -112,7 +109,7 @@ public class DeadParrotGUI extends JFrame {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(new TitledBorder("Settings"));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.insets = new Insets(10, 10, 10, 10);
         gbc.anchor = GridBagConstraints.WEST;
 
         spyModeEnabled = new JCheckBox("Spy Mode");
@@ -121,6 +118,7 @@ public class DeadParrotGUI extends JFrame {
         saveToDesktopEnabled = new JCheckBox("Save to Desktop");
         openOSSettingsEnabled = new JCheckBox("Open OS Recording Settings");
         easterEggEnabled = new JCheckBox("Easter Egg");
+        darkModeEnabled = new JCheckBox("Dark Mode");
 
         spyModeEnabled.setToolTipText("Enable spy mode - automatically enables keep recordings and disables marker mode");
         markerModeEnabled.setToolTipText("Enable marker mode for audio marking");
@@ -128,6 +126,7 @@ public class DeadParrotGUI extends JFrame {
         saveToDesktopEnabled.setToolTipText("Save recordings to desktop folder");
         openOSSettingsEnabled.setToolTipText("Open OS recording settings on startup");
         easterEggEnabled.setToolTipText("Enable Easter egg messages");
+        darkModeEnabled.setToolTipText("Enable dark mode for the interface");
 
         spyModeEnabled.addActionListener(e -> {
             updateSettings();
@@ -168,6 +167,13 @@ public class DeadParrotGUI extends JFrame {
             logToConsole("Easter Egg: " + easterEggEnabled.isSelected());
         });
 
+        darkModeEnabled.addActionListener(e -> {
+            updateSettings();
+            logToConsole("Dark Mode: " + darkModeEnabled.isSelected());
+            setLookAndFeel(darkModeEnabled.isSelected());
+            updateConsoleColors(darkModeEnabled.isSelected());
+        });
+
         gbc.gridx = 0; gbc.gridy = 0;
         panel.add(spyModeEnabled, gbc);
         gbc.gridx = 1;
@@ -182,6 +188,9 @@ public class DeadParrotGUI extends JFrame {
         gbc.gridx = 2;
         panel.add(easterEggEnabled, gbc);
 
+        gbc.gridx = 0; gbc.gridy = 2;
+        panel.add(darkModeEnabled, gbc);
+
         return panel;
     }
 
@@ -192,8 +201,6 @@ public class DeadParrotGUI extends JFrame {
         consoleOutput = new JTextArea();
         consoleOutput.setEditable(false);
         consoleOutput.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-        consoleOutput.setBackground(Color.BLACK);
-        consoleOutput.setForeground(Color.GREEN);
         consoleOutput.setLineWrap(true);
         consoleOutput.setWrapStyleWord(true);
 
@@ -221,8 +228,6 @@ public class DeadParrotGUI extends JFrame {
         statusLabel = new JLabel("Status: Stopped");
         recordingStatusLabel = new JLabel("Audio Recorder: Idle");
         listenerStatusLabel = new JLabel("Listener: Idle");
-
-        statusLabel.setForeground(Color.RED);
 
         panel.add(statusLabel);
         panel.add(new JLabel(" | "));
@@ -264,7 +269,6 @@ public class DeadParrotGUI extends JFrame {
             startButton.setEnabled(false);
             stopButton.setEnabled(true);
             statusLabel.setText("Status: Running");
-            statusLabel.setForeground(Color.GREEN);
             recordingStatusLabel.setText("Audio Recorder: Active");
             listenerStatusLabel.setText("Listener: Active");
 
@@ -288,7 +292,6 @@ public class DeadParrotGUI extends JFrame {
             startButton.setEnabled(true);
             stopButton.setEnabled(false);
             statusLabel.setText("Status: Stopped");
-            statusLabel.setForeground(Color.RED);
             recordingStatusLabel.setText("Audio Recorder: Idle");
             listenerStatusLabel.setText("Listener: Idle");
 
@@ -328,6 +331,11 @@ public class DeadParrotGUI extends JFrame {
         saveToDesktopEnabled.setSelected(Settings.SAVE_RECORDINGS_TO_DESKTOP);
         openOSSettingsEnabled.setSelected(Settings.OPEN_OS_RECORDING_SETTINGS);
         easterEggEnabled.setSelected(Settings.EASTER_EGG);
+        darkModeEnabled.setSelected(Settings.DARK_MODE);
+
+        // Ensure look and feel is set correctly based on loaded settings
+        setLookAndFeel(Settings.DARK_MODE);
+        updateConsoleColors(Settings.DARK_MODE);
 
         logToConsole("Settings loaded from configuration");
     }
@@ -339,6 +347,7 @@ public class DeadParrotGUI extends JFrame {
         Settings.SAVE_RECORDINGS_TO_DESKTOP = saveToDesktopEnabled.isSelected();
         Settings.OPEN_OS_RECORDING_SETTINGS = openOSSettingsEnabled.isSelected();
         Settings.EASTER_EGG = easterEggEnabled.isSelected();
+        Settings.DARK_MODE = darkModeEnabled.isSelected();
     }
 
     private void cleanup() {
@@ -374,11 +383,44 @@ public class DeadParrotGUI extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                if (Settings.DARK_MODE) {
+                    UIManager.setLookAndFeel(new FlatDarculaLaf());
+                } else {
+                    UIManager.setLookAndFeel(new FlatLightLaf());
+                }
             } catch (Exception e) {
-                if (log != null) log.error("Failed to set look and feel", e);
+                try {
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
+                         UnsupportedLookAndFeelException ex) {
+                    throw new RuntimeException(ex);
+                }
             }
             new DeadParrotGUI().setVisible(true);
         });
+    }
+
+    private void setLookAndFeel(boolean dark) {
+        try {
+            if (dark) {
+                UIManager.setLookAndFeel(new FlatDarculaLaf());
+            } else {
+                UIManager.setLookAndFeel(new FlatLightLaf());
+            }
+            SwingUtilities.updateComponentTreeUI(this);
+            this.pack();
+        } catch (Exception e) {
+            log.error("Failed to set look and feel", e);
+        }
+    }
+
+    private void updateConsoleColors(boolean dark) {
+        if (dark) {
+            consoleOutput.setBackground(Color.BLACK);
+            consoleOutput.setForeground(Color.GREEN);
+        } else {
+            consoleOutput.setBackground(Color.WHITE);
+            consoleOutput.setForeground(Color.BLACK);
+        }
     }
 }

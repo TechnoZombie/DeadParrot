@@ -87,4 +87,5 @@ public class Settings {
      */
     public static final int MAX_RECORDING_TIME_MS = 60000;
     public static boolean EASTER_EGG = false;
+    public static boolean DARK_MODE = true;
 }
