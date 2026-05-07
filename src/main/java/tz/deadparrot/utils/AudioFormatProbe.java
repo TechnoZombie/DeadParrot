@@ -12,6 +12,10 @@ import javax.sound.sampled.*;
 @Slf4j
 public class AudioFormatProbe {
     public static void main(String[] args) {
+        probeAudioFormats();
+    }
+
+    public static void probeAudioFormats() {
         Mixer.Info[] mixers = AudioSystem.getMixerInfo();
 
         for (Mixer.Info mixerInfo : mixers) {

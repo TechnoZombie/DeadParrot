@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.FlatDarculaLaf;
+import tz.deadparrot.utils.AudioFormatProbe;
 
 @Slf4j
 public class DeadParrotGUI extends JFrame {
@@ -26,6 +27,7 @@ public class DeadParrotGUI extends JFrame {
     private JTextArea consoleOutput;
     private JButton startButton;
     private JButton stopButton;
+    private JButton runAudioProbeButton;
 
     private JCheckBox spyModeEnabled;
     private JCheckBox markerModeEnabled;
@@ -105,6 +107,7 @@ public class DeadParrotGUI extends JFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
         startButton = new JButton("▶ START");
         stopButton = new JButton("■ STOP");
+        runAudioProbeButton = new JButton("Run Audio Probe");
 
         stopButton.setEnabled(false);
 
@@ -116,8 +119,13 @@ public class DeadParrotGUI extends JFrame {
             if (isRunning) stopRepeater();
         });
 
+        runAudioProbeButton.addActionListener(e -> {
+           AudioFormatProbe.probeAudioFormats();
+        });
+
         buttonPanel.add(startButton);
         buttonPanel.add(stopButton);
+        buttonPanel.add(runAudioProbeButton);
         panel.add(buttonPanel, BorderLayout.NORTH);
         panel.add(createOptionsPanel(), BorderLayout.CENTER);
 
