@@ -46,9 +46,27 @@ public class DeadParrotGUI extends JFrame {
     private GuiLogAppender guiLogAppender;
 
     public DeadParrotGUI() {
+        setupLookAndFeel();
         initializeGUI();
         setupLogAppender();
         loadCurrentSettings();
+    }
+
+    private void setupLookAndFeel() {
+        try {
+            if (Settings.DARK_MODE) {
+                UIManager.setLookAndFeel(new FlatDarculaLaf());
+            } else {
+                UIManager.setLookAndFeel(new FlatLightLaf());
+            }
+        } catch (Exception e) {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
+                     UnsupportedLookAndFeelException ex) {
+                log.error("Failed to set look and feel", ex);
+            }
+        }
     }
 
     private void initializeGUI() {
@@ -381,25 +399,6 @@ public class DeadParrotGUI extends JFrame {
         }
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            try {
-                if (Settings.DARK_MODE) {
-                    UIManager.setLookAndFeel(new FlatDarculaLaf());
-                } else {
-                    UIManager.setLookAndFeel(new FlatLightLaf());
-                }
-            } catch (Exception e) {
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
-                         UnsupportedLookAndFeelException ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-            new DeadParrotGUI().setVisible(true);
-        });
-    }
 
     private void setLookAndFeel(boolean dark) {
         try {
