@@ -10,6 +10,12 @@ import javax.sound.sampled.AudioFormat;
 @Slf4j
 public class Settings {
 
+    // Working mode configuration
+    /**
+     * Defines if the application should use a graphical user interface (GUI) or run in console mode.
+     */
+    public static boolean USE_GUI = true;
+
     // Audio Format Configuration
     /**
      * Standard audio format used throughout the application.

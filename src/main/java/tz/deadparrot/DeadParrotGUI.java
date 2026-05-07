@@ -57,7 +57,8 @@ public class DeadParrotGUI extends JFrame {
         setSize(900, 650);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
-
+        setIconImage(new ImageIcon(getClass().getResource("/img/DeadParrotSmall.png")).getImage());
+        
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
