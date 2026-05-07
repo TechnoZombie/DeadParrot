@@ -10,6 +10,12 @@ import javax.sound.sampled.AudioFormat;
 @Slf4j
 public class Settings {
 
+    // Working mode configuration
+    /**
+     * Defines if the application should use a graphical user interface (GUI) or run in console mode.
+     */
+    public static boolean USE_GUI = true;
+
     // Audio Format Configuration
     /**
      * Standard audio format used throughout the application.
@@ -45,7 +51,7 @@ public class Settings {
      * When true, enables spy mode (audio recording only, no other features).
      * Default: false
      */
-    public static final boolean SPY_MODE = false;
+    public static boolean SPY_MODE = false;
 
     /**
      * When true, enables marker mode (only plays audio marker, no other features).
@@ -86,6 +92,6 @@ public class Settings {
      * Default: 60000ms (60 seconds)
      */
     public static final int MAX_RECORDING_TIME_MS = 60000;
-    public static final boolean EASTER_EGG = false;
-
+    public static boolean EASTER_EGG = false;
+    public static boolean DARK_MODE = true;
 }
