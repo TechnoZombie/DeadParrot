@@ -86,7 +86,7 @@ These settings can be modified directly in `Settings.java` or through the GUI in
 
 This project uses:
 
-- **Java 9+** – Core language
+- **Java 19+** – Core language
 - **Java Sound API** (`javax.sound.sampled`) – For audio input/output operations
 - **Lombok** (`@Slf4j`) – For simplified logging and reducing boilerplate code
 - **SLF4J** – Logging facade
