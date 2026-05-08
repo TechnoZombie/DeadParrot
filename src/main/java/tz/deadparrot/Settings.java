@@ -72,7 +72,8 @@ public class Settings {
      */
     public static boolean KEEP_RECORDINGS = true;
     public static boolean SAVE_RECORDINGS_TO_DESKTOP = true;
-
+    public static String RECORDINGS_DIRECTORY = null;
+    
     // Silence Detection Settings
     /**
      * Amplitude threshold below which audio is considered silence.
@@ -94,4 +95,5 @@ public class Settings {
     public static final int MAX_RECORDING_TIME_MS = 60000;
     public static boolean EASTER_EGG = false;
     public static boolean DARK_MODE = true;
+
 }

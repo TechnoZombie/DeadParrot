@@ -28,11 +28,13 @@ public class DeadParrotGUI extends JFrame {
     private JButton startButton;
     private JButton stopButton;
     private JButton runAudioProbeButton;
+    private JButton chooseDirectoryButton;
 
     private JCheckBox spyModeEnabled;
     private JCheckBox markerModeEnabled;
     private JCheckBox keepRecordingsEnabled;
     private JCheckBox saveToDesktopEnabled;
+    private JCheckBox customDirectoryEnabled;
     private JCheckBox openOSSettingsEnabled;
     private JCheckBox easterEggEnabled;
     private JCheckBox darkModeEnabled;
@@ -149,6 +151,7 @@ public class DeadParrotGUI extends JFrame {
         markerModeEnabled = new JCheckBox("Marker Mode");
         keepRecordingsEnabled = new JCheckBox("Keep Recordings");
         saveToDesktopEnabled = new JCheckBox("Save to Desktop");
+        customDirectoryEnabled = new JCheckBox("Custom Directory");
         openOSSettingsEnabled = new JCheckBox("Open OS Recording Settings");
         easterEggEnabled = new JCheckBox("Easter Egg");
         darkModeEnabled = new JCheckBox("Dark Mode");
@@ -207,6 +210,23 @@ public class DeadParrotGUI extends JFrame {
             updateConsoleColors(darkModeEnabled.isSelected());
         });
 
+        // TODO: CHANGE LOGIC SO THAT CUSTOM DIR AND DESKTOP ARE MUTUALLY EXCLUSIVE
+        // TODO: CHANGE RECORDING CLASS TO USE EITHER CUSTOM CLASS OR DESKTOP
+        chooseDirectoryButton = new JButton("Choose Directory");
+        chooseDirectoryButton.setToolTipText("Choose a custom directory for recordings");
+        chooseDirectoryButton.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            int returnVal = chooser.showOpenDialog(this);
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                Settings.RECORDINGS_DIRECTORY = chooser.getSelectedFile().getAbsolutePath();
+                saveToDesktopEnabled.setSelected(false);
+                Settings.SAVE_RECORDINGS_TO_DESKTOP = false;
+                customDirectoryEnabled.setSelected(true);
+                logToConsole("Custom recordings directory set to: " + Settings.RECORDINGS_DIRECTORY);
+            }
+        });
+
         gbc.gridx = 0; gbc.gridy = 0;
         panel.add(spyModeEnabled, gbc);
         gbc.gridx = 1;
@@ -217,12 +237,17 @@ public class DeadParrotGUI extends JFrame {
         gbc.gridx = 0; gbc.gridy = 1;
         panel.add(saveToDesktopEnabled, gbc);
         gbc.gridx = 1;
-        panel.add(openOSSettingsEnabled, gbc);
+        panel.add(customDirectoryEnabled, gbc);
         gbc.gridx = 2;
+        panel.add(openOSSettingsEnabled, gbc);
+        gbc.gridx = 3;
         panel.add(easterEggEnabled, gbc);
 
         gbc.gridx = 0; gbc.gridy = 2;
         panel.add(darkModeEnabled, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 3;
+        panel.add(chooseDirectoryButton, gbc);
 
         return panel;
     }
