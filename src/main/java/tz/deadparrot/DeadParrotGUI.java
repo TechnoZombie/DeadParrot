@@ -109,6 +109,8 @@ public class DeadParrotGUI extends JFrame {
         stopButton = new JButton("■ STOP");
         runAudioProbeButton = new JButton("Run Audio Probe");
 
+        runAudioProbeButton.setToolTipText("Probe available audio formats and devices");
+
         stopButton.setEnabled(false);
 
         startButton.addActionListener(e -> {
@@ -120,7 +122,11 @@ public class DeadParrotGUI extends JFrame {
         });
 
         runAudioProbeButton.addActionListener(e -> {
-           AudioFormatProbe.probeAudioFormats();
+            if (!isRunning) {
+                AudioFormatProbe.probeAudioFormats();
+            } else {
+                logToConsole("Stop the repeater before running the audio probe.");
+            }
         });
 
         buttonPanel.add(startButton);
