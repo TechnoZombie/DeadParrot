@@ -22,7 +22,7 @@ public class FileUtils {
                 log.info(Constants.FOLDER_EXISTS);
             }
         } catch (Exception e) {
-            log.error(Constants.ERROR_CREATING_FOLDER + e.getMessage());
+            log.error(Constants.ERROR_CREATING_FOLDER + "{}", e.getMessage());
         }
     }
 
@@ -42,7 +42,7 @@ public class FileUtils {
     }
 
     public static File generateOutputFile() {
-       File outputFile = null;
+       File outputFile;
 
         if (Settings.KEEP_RECORDINGS) {
             outputFile = FileUtils.checkSaveDestinationAndReturnFile();

@@ -45,7 +45,7 @@ public class Settings {
      * When true, opens OS sound recording settings.
      * Default: false
      */
-    public static boolean OPEN_OS_RECORDING_SETTINGS = true;
+    public static boolean OPEN_OS_RECORDING_SETTINGS = false;
 
     /**
      * When true, enables spy mode (audio recording only, no other features).

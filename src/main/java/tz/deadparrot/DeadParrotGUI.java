@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import tz.deadparrot.utils.AudioFormatProbe;
+import tz.deadparrot.utils.SoundSettingsOpener;
 
 @Slf4j
 public class DeadParrotGUI extends JFrame {
@@ -29,6 +30,7 @@ public class DeadParrotGUI extends JFrame {
     private JButton stopButton;
     private JButton runAudioProbeButton;
     private JButton chooseDirectoryButton;
+    private JButton openRecordingSettingsButton;
 
     private JCheckBox spyModeEnabled;
     private JCheckBox markerModeEnabled;
@@ -74,13 +76,13 @@ public class DeadParrotGUI extends JFrame {
     }
 
     private void initializeGUI() {
-        setTitle("DeadParrot Ham Radio Repeater v1.0");
+        setTitle("DeadParrot Ham Radio Repeater v2.0");
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setSize(900, 650);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
         setIconImage(new ImageIcon(getClass().getResource("/img/DeadParrotSmall.png")).getImage());
-        
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -88,7 +90,11 @@ public class DeadParrotGUI extends JFrame {
             }
         });
 
-        add(createControlPanel(), BorderLayout.NORTH);
+        JPanel northPanel = new JPanel(new BorderLayout());
+        northPanel.add(createControlPanel(), BorderLayout.NORTH);
+        northPanel.add(createAudioControlsPanel(), BorderLayout.SOUTH);
+
+        add(northPanel, BorderLayout.NORTH);
         add(createConsolePanel(), BorderLayout.CENTER);
         add(createStatusPanel(), BorderLayout.SOUTH);
     }
@@ -109,10 +115,6 @@ public class DeadParrotGUI extends JFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
         startButton = new JButton("▶ START");
         stopButton = new JButton("■ STOP");
-        runAudioProbeButton = new JButton("Run Audio Probe");
-
-        runAudioProbeButton.setToolTipText("Probe available audio formats and devices");
-
         stopButton.setEnabled(false);
 
         startButton.addActionListener(e -> {
@@ -123,23 +125,14 @@ public class DeadParrotGUI extends JFrame {
             if (isRunning) stopRepeater();
         });
 
-        runAudioProbeButton.addActionListener(e -> {
-            if (!isRunning) {
-                AudioFormatProbe.probeAudioFormats();
-            } else {
-                logToConsole("Stop the repeater before running the audio probe.");
-            }
-        });
-
         buttonPanel.add(startButton);
         buttonPanel.add(stopButton);
-        buttonPanel.add(runAudioProbeButton);
+
         panel.add(buttonPanel, BorderLayout.NORTH);
         panel.add(createOptionsPanel(), BorderLayout.CENTER);
 
         return panel;
     }
-
     private JPanel createOptionsPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(new TitledBorder("Settings"));
@@ -249,6 +242,38 @@ public class DeadParrotGUI extends JFrame {
 
         gbc.gridx = 0; gbc.gridy = 3;
         panel.add(chooseDirectoryButton, gbc);
+
+        return panel;
+    }
+
+    private JPanel createAudioControlsPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        panel.setBorder(new TitledBorder("Audio Controls"));
+
+        runAudioProbeButton = new JButton("Run Audio Probe");
+        openRecordingSettingsButton = new JButton("Open Recording Settings");
+
+        runAudioProbeButton.setToolTipText("Probe available audio formats and devices");
+        openRecordingSettingsButton.setToolTipText("Open System Recording Settings");
+
+        runAudioProbeButton.addActionListener(e -> {
+            if (!isRunning) {
+                AudioFormatProbe.probeAudioFormats();
+            } else {
+                logToConsole("Stop the repeater before running the audio probe.");
+            }
+        });
+
+        openRecordingSettingsButton.addActionListener(e -> {
+            if (isRunning) {
+                SoundSettingsOpener.openRecordingSettings();
+            } else {
+                logToConsole("Start the repeater before opening recording settings.");
+            }
+        });
+
+        panel.add(runAudioProbeButton);
+        panel.add(openRecordingSettingsButton);
 
         return panel;
     }
