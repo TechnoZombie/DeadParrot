@@ -23,6 +23,8 @@ public class Constants {
     public static final String OUTPUT_TEMP_FILE_NAME = "tempRecord.wav";
     public static final String OUTPUT_FOLDER_PATH = "Recordings/";
     public static String OUTPUT_DESKTOP_FOLDER_PATH;
+    public static String CUSTOM_RECORDINGS_DIRECTORY = null;
+    public static String CUSTOM_RECORDINGS_DIRECTORY_PREFIX = "\\Recordings\\";
     public static final String WINDOWS_DESKTOP_PATH = System.getProperty("user.home") + "\\Desktop\\Recordings\\";
     public static final String LINUX_DESKTOP_PATH = System.getProperty("user.home") + "/Desktop/Recordings/";
     public static final String FILENAME_PREFIX = "DeadParrot-recording_";

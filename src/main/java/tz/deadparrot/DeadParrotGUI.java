@@ -219,11 +219,12 @@ public class DeadParrotGUI extends JFrame {
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             int returnVal = chooser.showOpenDialog(this);
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-                Settings.RECORDINGS_DIRECTORY = chooser.getSelectedFile().getAbsolutePath();
+                Constants.CUSTOM_RECORDINGS_DIRECTORY = chooser.getSelectedFile().getAbsolutePath();
                 saveToDesktopEnabled.setSelected(false);
                 Settings.SAVE_RECORDINGS_TO_DESKTOP = false;
+                Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR = true;
                 customDirectoryEnabled.setSelected(true);
-                logToConsole("Custom recordings directory set to: " + Settings.RECORDINGS_DIRECTORY);
+                logToConsole("Custom recordings directory set to: " + Constants.CUSTOM_RECORDINGS_DIRECTORY);
             }
         });
 

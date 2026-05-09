@@ -47,7 +47,9 @@ public class Processor {
             log.warn(Constants.KEEP_RECORDINGS_IS_ON);
             if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
                 FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_DESKTOP_FOLDER_PATH);
-            } else {
+            } else if (Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR) {
+                    FileUtils.verifyAndCreateOutputFolder(Constants.CUSTOM_RECORDINGS_DIRECTORY);
+                } else {
                 FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_FOLDER_PATH);
             }
 

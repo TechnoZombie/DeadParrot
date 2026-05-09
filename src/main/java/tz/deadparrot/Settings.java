@@ -72,7 +72,7 @@ public class Settings {
      */
     public static boolean KEEP_RECORDINGS = true;
     public static boolean SAVE_RECORDINGS_TO_DESKTOP = true;
-    public static String RECORDINGS_DIRECTORY = null;
+    public static boolean SAVE_RECORDINGS_TO_CUSTOM_DIR = false;
     
     // Silence Detection Settings
     /**
