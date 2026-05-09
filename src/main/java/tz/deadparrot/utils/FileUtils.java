@@ -4,7 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import tz.deadparrot.Constants;
 import tz.deadparrot.Settings;
 
+import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,7 +16,7 @@ import java.time.LocalDateTime;
 public class FileUtils {
     public static void verifyAndCreateOutputFolder(String dirPath) {
         try {
-            Path path = Paths.get(dirPath + Constants.CUSTOM_RECORDINGS_DIRECTORY_PREFIX);
+            Path path = Paths.get(dirPath);
             if (!Files.exists(path)) {
                 Files.createDirectories(path);
                 log.info(Constants.CREATED_FOLDER);
@@ -26,14 +28,14 @@ public class FileUtils {
         }
     }
 
-    public static void detectOS() {
+    public static void detectOS(Boolean showLogs) {
         String osName = System.getProperty("os.name").toLowerCase();
         if (osName.contains(Constants.LINUX_OS)) {
-            log.info(Constants.RUNNING_LINUX);
+            if (showLogs) log.info(Constants.RUNNING_LINUX);
             Constants.IS_LINUX = true;
             Constants.OUTPUT_DESKTOP_FOLDER_PATH = Constants.LINUX_DESKTOP_PATH;
         } else if (osName.contains(Constants.WINDOWS_OS)) {
-            log.info(Constants.RUNNING_WINDOWS);
+            if (showLogs) log.info(Constants.RUNNING_WINDOWS);
             Constants.IS_WINDOWS = true;
             Constants.OUTPUT_DESKTOP_FOLDER_PATH = Constants.WINDOWS_DESKTOP_PATH;
         } else {
@@ -42,7 +44,7 @@ public class FileUtils {
     }
 
     public static File generateOutputFile() {
-       File outputFile;
+        File outputFile;
 
         if (Settings.KEEP_RECORDINGS) {
             outputFile = FileUtils.checkSaveDestinationAndReturnFile();
@@ -59,16 +61,40 @@ public class FileUtils {
         File outputFile = null;
 
         if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
-            outputFile = new File(Constants.OUTPUT_DESKTOP_FOLDER_PATH +
-                    Constants.FILENAME_PREFIX + timestamp +
-                    Constants.FILENAME_EXTENSION);
+            outputFile = new File(Constants.OUTPUT_DESKTOP_FOLDER_PATH + Constants.FILENAME_PREFIX + timestamp + Constants.FILENAME_EXTENSION);
         } else if (Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR) {
             verifyAndCreateOutputFolder(Constants.CUSTOM_RECORDINGS_DIRECTORY);
-            outputFile = new File(Constants.CUSTOM_RECORDINGS_DIRECTORY +
-                    Constants.CUSTOM_RECORDINGS_DIRECTORY_PREFIX +
-                    Constants.FILENAME_PREFIX + timestamp +
-                    Constants.FILENAME_EXTENSION);
+            outputFile = new File(Constants.CUSTOM_RECORDINGS_DIRECTORY + Constants.FILENAME_PREFIX + timestamp + Constants.FILENAME_EXTENSION);
         }
         return outputFile;
+    }
+
+    public static void openDestinationFolder() {
+
+        String path = null;
+
+        if (Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR) {
+            path = Constants.CUSTOM_RECORDINGS_DIRECTORY;
+
+        } else if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
+            path = Constants.OUTPUT_DESKTOP_FOLDER_PATH;
+        }
+
+        if (path == null) {
+            return;
+        }
+
+        File directory = new File(path);
+
+        if (!directory.exists()) {
+            return;
+        }
+
+        try {
+            Desktop.getDesktop().open(directory);
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 }

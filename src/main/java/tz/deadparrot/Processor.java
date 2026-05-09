@@ -17,7 +17,7 @@ public class Processor {
 
     public void init() {
 
-        FileUtils.detectOS();
+        FileUtils.detectOS(true);
         applySettings();
         initializeComponents();
         setupShutdownHook();
@@ -48,8 +48,8 @@ public class Processor {
             if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
                 FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_DESKTOP_FOLDER_PATH);
             } else if (Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR) {
-                    FileUtils.verifyAndCreateOutputFolder(Constants.CUSTOM_RECORDINGS_DIRECTORY);
-                } else {
+                FileUtils.verifyAndCreateOutputFolder(Constants.CUSTOM_RECORDINGS_DIRECTORY);
+            } else {
                 FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_FOLDER_PATH);
             }
 
@@ -58,7 +58,7 @@ public class Processor {
             SoundSettingsOpener.openRecordingSettings();
         }
 
-        if(Settings.PRINT_SETTINGS) {
+        if (Settings.PRINT_SETTINGS) {
             new Printer().printCurrentSettings();
         }
     }
