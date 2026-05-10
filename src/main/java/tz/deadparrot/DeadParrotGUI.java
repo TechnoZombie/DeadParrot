@@ -32,6 +32,8 @@ public class DeadParrotGUI extends JFrame {
     private JButton chooseDirectoryButton;
     private JButton openDirectoryButton;
 
+    private JLabel dirOutput;
+
     private JCheckBox spyModeEnabled;
     private JCheckBox markerModeEnabled;
     private JCheckBox keepRecordingsEnabled;
@@ -99,6 +101,7 @@ public class DeadParrotGUI extends JFrame {
 
         JPanel northPanel = new JPanel(new BorderLayout());
         northPanel.add(createControlPanel(), BorderLayout.NORTH);
+        northPanel.add(createDirPanel(), BorderLayout.CENTER);
         northPanel.add(createAudioControlsPanel(), BorderLayout.SOUTH);
 
         add(northPanel, BorderLayout.NORTH);
@@ -235,6 +238,35 @@ public class DeadParrotGUI extends JFrame {
             logToConsole("Dark Mode: " + Settings.DARK_MODE);
         });
 
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        panel.add(spyModeEnabled, gbc);
+        gbc.gridx = 1;
+        panel.add(markerModeEnabled, gbc);
+        gbc.gridx = 2;
+        panel.add(keepRecordingsEnabled, gbc);
+        gbc.gridx = 3;
+        panel.add(printSettingsEnabled, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panel.add(darkModeEnabled, gbc);
+        gbc.gridx = 1;
+        panel.add(openOSSettingsEnabled, gbc);
+        gbc.gridx = 2;
+        panel.add(easterEggEnabled, gbc);
+
+
+        return panel;
+    }
+
+    private JPanel createDirPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(new TitledBorder("Save Directory"));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.anchor = GridBagConstraints.WEST;
         saveToDesktopButton = new JButton("Save to Desktop");
         saveToDesktopButton.setToolTipText("Save recordings to desktop folder");
 
@@ -287,35 +319,23 @@ public class DeadParrotGUI extends JFrame {
 
         openDirectoryButton.addActionListener(e -> FileUtils.openDestinationFolder());
 
+        dirOutput = new JLabel("Dir: Not Set");
+        dirOutput.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         gbc.gridx = 0;
         gbc.gridy = 0;
-        panel.add(spyModeEnabled, gbc);
-        gbc.gridx = 1;
-        panel.add(markerModeEnabled, gbc);
-        gbc.gridx = 2;
-        panel.add(keepRecordingsEnabled, gbc);
-        gbc.gridx = 3;
-        panel.add(printSettingsEnabled, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(darkModeEnabled, gbc);
-        gbc.gridx = 1;
-        panel.add(openOSSettingsEnabled, gbc);
-        gbc.gridx = 2;
-        panel.add(easterEggEnabled, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 2;
         panel.add(saveToDesktopButton, gbc);
 
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 0;
         panel.add(chooseDirectoryButton, gbc);
 
-        gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridx = 2;
+        gbc.gridy = 0;
         panel.add(openDirectoryButton, gbc);
+
+        gbc.gridx = 3;
+        gbc.gridy = 0;
+        panel.add(dirOutput, gbc);
 
         return panel;
     }
@@ -611,6 +631,18 @@ public class DeadParrotGUI extends JFrame {
             boolean hasValidOutputDirectory = (Settings.SAVE_RECORDINGS_TO_DESKTOP && Settings.OUTPUT_DESKTOP_FOLDER_PATH != null) || (Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR && Settings.CUSTOM_RECORDINGS_DIRECTORY != null);
 
             openDirectoryButton.setEnabled(hasValidOutputDirectory);
+
+            if (hasValidOutputDirectory) {
+
+                if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
+
+                    dirOutput.setText("Dir: Desktop");
+
+                } else if (Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR) {
+
+                    dirOutput.setText("Dir: " + SystemUtils.shortenPath(Settings.CUSTOM_RECORDINGS_DIRECTORY, 40));
+                }
+            }
 
         } finally {
             updatingUI = false;

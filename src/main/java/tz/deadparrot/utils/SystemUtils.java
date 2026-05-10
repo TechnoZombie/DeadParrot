@@ -42,5 +42,14 @@ public class SystemUtils {
         return fullBounds;
     }
 
+    public static String shortenPath(String path, int maxLength) {
+
+        if (path == null || path.length() <= maxLength) {
+            return path;
+        }
+
+        return "..." + path.substring(path.length() - maxLength);
+    }
+
 
 }
