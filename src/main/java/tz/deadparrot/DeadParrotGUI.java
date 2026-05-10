@@ -168,19 +168,21 @@ public class DeadParrotGUI extends JFrame {
             boolean spyMode = spyModeEnabled.isSelected();
 
             if (spyMode) {
+
                 keepRecordingsEnabled.setSelected(true);
                 keepRecordingsEnabled.setEnabled(false);
 
                 markerModeEnabled.setSelected(false);
                 markerModeEnabled.setEnabled(false);
 
-                logToConsole(Constants.SPY_MODE_IS_ON);
+                logToConsole(Constants.SPY_MODE_ENABLED);
 
             } else {
+
                 keepRecordingsEnabled.setEnabled(true);
                 markerModeEnabled.setEnabled(true);
 
-                logToConsole("Spy mode disabled!");
+                logToConsole(Constants.SPY_MODE_DISABLED);
             }
 
             updateSettings();

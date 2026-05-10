@@ -12,11 +12,11 @@ public class SystemUtils {
     public static void detectOS(Boolean showLogs) {
         String osName = System.getProperty("os.name").toLowerCase();
         if (osName.contains(Constants.LINUX_OS)) {
-            if (showLogs) SystemUtils.log.info(Constants.RUNNING_LINUX);
+            if (showLogs) log.info(Constants.RUNNING_LINUX);
             Constants.IS_LINUX = true;
             Settings.OUTPUT_DESKTOP_FOLDER_PATH = Constants.LINUX_DESKTOP_PATH;
         } else if (osName.contains(Constants.WINDOWS_OS)) {
-            if (showLogs) SystemUtils.log.info(Constants.RUNNING_WINDOWS);
+            if (showLogs) log.info(Constants.RUNNING_WINDOWS);
             Constants.IS_WINDOWS = true;
             Settings.OUTPUT_DESKTOP_FOLDER_PATH = Constants.WINDOWS_DESKTOP_PATH;
         } else {

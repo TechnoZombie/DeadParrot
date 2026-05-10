@@ -35,7 +35,7 @@ public class Processor {
         if (Settings.SPY_MODE) {
             Settings.KEEP_RECORDINGS = true;
             Settings.MARKER_MODE = false;
-            log.warn(Constants.SPY_MODE_IS_ON);
+            log.warn(Constants.SPY_MODE_ENABLED);
         }
 
         if (Settings.MARKER_MODE) {

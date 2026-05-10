@@ -11,7 +11,8 @@ public class Constants {
     public static final String LINE_UNAVAILABLE = "Line is Unavailable";
     public static final String SHUTTING_DOWN = "Shutting down DeadParrot...";
     public static final String SHUT_DOWN_COMPLETE = "[OFF]: DeadParrot is no more.";
-    public static final String SPY_MODE_IS_ON = "⚠️ SPY_MODE IS ON! RECORDING ONLY, NO PLAYBACK!️";
+    public static final String SPY_MODE_ENABLED = "⚠️ SPY_MODE IS ON! RECORDING ONLY, NO PLAYBACK!️";
+    public static final String SPY_MODE_DISABLED = "SPY MODE DISABLED!";
     public static final String ERROR_CREATING_FOLDER = "Error creating directory: ";
     public static final String OPENED_OS_RECORDING_SETTINGS = "Opened OS Sound Settings: Recording";
     public static final String FAILED_TO_OPEN_REC_SETTINGS = "Failed to Open Sound Settings: ";
