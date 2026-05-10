@@ -5,6 +5,15 @@
 This project mimics the behavior of a repeater station by automatically handling sound detection, recording, and playback, with minimal setup.
 
 ---
+<p align="center">
+  <img src="images/dp01.png" width="30%">
+  <img src="images/dp02.png" width="30%">
+  <img src="images/dp03.png" width="30%">
+</p>
+
+![Listening](images/dp01.png) ![Played back](images/dp02.png) ![Audio probe](images/dp03.png)
+
+---
 
 ## 🎯 Features
 
