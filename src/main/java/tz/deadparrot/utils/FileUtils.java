@@ -87,6 +87,7 @@ public class FileUtils {
         File directory = new File(path);
 
         if (!directory.exists()) {
+            log.error("Folder does not exist: {}", path);
             return;
         }
 
