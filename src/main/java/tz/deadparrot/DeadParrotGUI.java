@@ -321,22 +321,43 @@ public class DeadParrotGUI extends JFrame {
         panel.setBorder(new TitledBorder("Audio Controls"));
 
         JButton runAudioProbeButton = new JButton("Run Audio Probe");
+        JButton openPlaybackSettingsButton = new JButton("Open Playback Settings");
         JButton openRecordingSettingsButton = new JButton("Open Recording Settings");
 
         runAudioProbeButton.setToolTipText("Probe available audio formats and devices");
-        openRecordingSettingsButton.setToolTipText("Open System Recording Settings");
+        openPlaybackSettingsButton.setToolTipText("Open System Audio Playback Settings");
+        openRecordingSettingsButton.setToolTipText("Open System Audio Recording Settings");;
 
         runAudioProbeButton.addActionListener(e -> {
-            if (!isRunning) {
-                AudioFormatProbe.probeAudioFormats();
-            } else {
-                logToConsole("Stop the repeater before running the audio probe.");
+
+            if (isRunning) {
+                log.info(Constants.STOP_BEFORE_RUNNING);
+                return;
             }
+
+            runAudioProbeButton.setEnabled(false);
+
+            log.info(Constants.AUDIO_PROBE_RUNNING);
+
+            new Thread(() -> {
+                try {
+                    AudioFormatProbe.probeAudioFormats();
+                    log.info(Constants.AUDIO_PROBE_COMPLETED);
+
+                } finally {
+                    SwingUtilities.invokeLater(() ->
+                            runAudioProbeButton.setEnabled(true)
+                    );
+                }
+            }).start();
         });
+
+        openPlaybackSettingsButton.addActionListener(e -> SoundSettingsOpener.openPlaybackSettings());
 
         openRecordingSettingsButton.addActionListener(e -> SoundSettingsOpener.openRecordingSettings());
 
         panel.add(runAudioProbeButton);
+        panel.add(openPlaybackSettingsButton);
         panel.add(openRecordingSettingsButton);
 
         return panel;

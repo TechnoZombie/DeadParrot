@@ -4,6 +4,11 @@ import java.time.format.DateTimeFormatter;
 
 public class Constants {
 
+    // GUI
+    public static final String STOP_BEFORE_RUNNING = "Stop the repeater before running the audio probe.";
+    public static final String AUDIO_PROBE_RUNNING = "Running audio probe...";
+    public static final String AUDIO_PROBE_COMPLETED = "Audio probe completed!";
+
     // Processor
     public static final String CREATED_FOLDER = "[OK] Created \"Recordings\" folder.";
     public static final String FOLDER_EXISTS = "[OK] \"Recordings\" folder exists.";
@@ -14,10 +19,14 @@ public class Constants {
     public static final String SPY_MODE_ENABLED = "⚠️ SPY_MODE IS ON! RECORDING ONLY, NO PLAYBACK!️";
     public static final String SPY_MODE_DISABLED = "SPY MODE DISABLED!";
     public static final String ERROR_CREATING_FOLDER = "Error creating directory: ";
-    public static final String OPENED_OS_RECORDING_SETTINGS = "Opened OS Sound Settings: Recording";
-    public static final String FAILED_TO_OPEN_REC_SETTINGS = "Failed to Open Sound Settings: ";
     public static final String RUNNING_IN_STANDARD_MODE = "DeadParrot Mode: STANDARD.";
     public static final String RUNNING_IN_MARKER_MODE = "DeadParrot Mode: MARKER ONLY.";
+
+    // SoundSettingsOpener
+    public static final String OPENED_OS_PLAYBACK_SETTINGS = "Opened OS Sound Settings: Playback";
+    public static final String OPENED_OS_RECORDING_SETTINGS = "Opened OS Sound Settings: Recording";
+    public static final String FAILED_TO_OPEN_SOUND_SETTINGS = "Failed to Open Sound Settings: ";
+    public static final String NOT_IMPLEMENTED = "Not implemented for this OS.";
 
     // AudioRecorder
     public static final String LINE_IN_READY = "Line-In Ready.";
@@ -48,13 +57,14 @@ public class Constants {
     // FileUtils
     public static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("dd-MM-yyyy_HH.mm.ss");
     public static final String OUTPUT_FOLDER_PATH = "Recordings/";
-
     public static String CUSTOM_RECORDINGS_DIRECTORY_PREFIX = "\\Recordings\\";
     public static final String OUTPUT_TEMP_FILE_NAME = "tempRecord.wav";
-    public static final String WINDOWS_DESKTOP_PATH = System.getProperty("user.home") + "\\Desktop\\Recordings\\";
-    public static final String LINUX_DESKTOP_PATH = System.getProperty("user.home") + "/Desktop/Recordings/";
     public static final String FILENAME_PREFIX = "DeadParrot-recording_";
     public static final String FILENAME_EXTENSION = ".wav";
+
+    // SystemUtils
+    public static final String WINDOWS_DESKTOP_PATH = System.getProperty("user.home") + "\\Desktop\\Recordings\\";
+    public static final String LINUX_DESKTOP_PATH = System.getProperty("user.home") + "/Desktop/Recordings/";
     public static final String WINDOWS_OS = "windows";
     public static final String LINUX_OS = "linux";
     public static final String RUNNING_LINUX = "[INFO] Running on Linux OS. Setting Desktop path.";

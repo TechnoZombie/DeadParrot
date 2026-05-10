@@ -21,7 +21,7 @@ public class SoundSettingsOpener {
                     new ProcessBuilder("control", "mmsys.cpl,,1").start();
                     log.info(Constants.OPENED_OS_RECORDING_SETTINGS);
                 } catch (IOException fallbackException) {
-                    log.error(Constants.FAILED_TO_OPEN_REC_SETTINGS + fallbackException.getMessage());
+                    log.error(Constants.FAILED_TO_OPEN_SOUND_SETTINGS + fallbackException.getMessage());
                 }
             }
         } else if (Constants.IS_LINUX) {
@@ -50,21 +50,26 @@ public class SoundSettingsOpener {
             log.info(Constants.OPENED_OS_RECORDING_SETTINGS);
 
         } catch (IOException e) {
-            log.error(Constants.FAILED_TO_OPEN_REC_SETTINGS + e.getMessage());
+            log.error(Constants.FAILED_TO_OPEN_SOUND_SETTINGS + e.getMessage());
         }
     }
 
     /**
-     * Method to open general sound settings (Windows 10/11 Settings app)
+     * Opens Sound Settings directly to the Playback tab
      */
-    public static void openSoundSettings() {
-        try {
-            ProcessBuilder pb = new ProcessBuilder("ms-settings:sound");
-            pb.start();
-            log.info(Constants.OPENED_OS_RECORDING_SETTINGS);
+    public static void openPlaybackSettings() {
 
-        } catch (IOException e) {
-            log.error(Constants.FAILED_TO_OPEN_REC_SETTINGS + e.getMessage());
+        if (Constants.IS_WINDOWS) {
+            try {
+                new ProcessBuilder("control", "mmsys.cpl,,0").start();
+                log.info(Constants.OPENED_OS_PLAYBACK_SETTINGS);
+
+            } catch (IOException e) {
+                log.error(Constants.FAILED_TO_OPEN_SOUND_SETTINGS);
+                log.error(e.getMessage());
+            }
+        } else {
+            log.info(Constants.NOT_IMPLEMENTED);
         }
     }
 }
