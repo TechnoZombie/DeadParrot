@@ -52,11 +52,11 @@ public class DeadParrotGUI extends JFrame {
     private GuiLogAppender guiLogAppender;
 
     public DeadParrotGUI() {
+        FileUtils.detectOS(false);
         setupLookAndFeel();
         initializeGUI();
         setupLogAppender();
         loadCurrentSettings();
-        FileUtils.detectOS(false);
     }
 
     private void setupLookAndFeel() {
@@ -149,7 +149,6 @@ public class DeadParrotGUI extends JFrame {
         easterEggEnabled = new JCheckBox("Easter Egg");
         darkModeEnabled = new JCheckBox("Dark Mode");
 
-
         spyModeEnabled.setToolTipText("Enable spy mode - automatically enables keep recordings and disables marker mode");
         markerModeEnabled.setToolTipText("Enable marker mode for audio marking");
         keepRecordingsEnabled.setToolTipText("Keep recorded audio files");
@@ -159,22 +158,40 @@ public class DeadParrotGUI extends JFrame {
         darkModeEnabled.setToolTipText("Enable dark mode for the interface");
 
         spyModeEnabled.addActionListener(e -> {
-            updateSettings();
-            logToConsole("Spy Mode: " + spyModeEnabled.isSelected());
-            if (spyModeEnabled.isSelected()) {
+
+            boolean spyMode = spyModeEnabled.isSelected();
+
+            if (spyMode) {
                 keepRecordingsEnabled.setSelected(true);
+                keepRecordingsEnabled.setEnabled(false);
+
                 markerModeEnabled.setSelected(false);
-                logToConsole("Spy mode enabled - Keep recordings ON, Marker mode OFF");
+                markerModeEnabled.setEnabled(false);
+
+                logToConsole(Constants.SPY_MODE_IS_ON);
+
+            } else {
+                keepRecordingsEnabled.setEnabled(true);
+                markerModeEnabled.setEnabled(true);
+
+                logToConsole("Spy mode disabled!");
             }
+
+            updateSettings();
         });
 
         markerModeEnabled.addActionListener(e -> {
-            updateSettings();
-            logToConsole("Marker Mode: " + markerModeEnabled.isSelected());
-            if (markerModeEnabled.isSelected()) {
+
+            boolean markerMode = markerModeEnabled.isSelected();
+
+            if (markerMode) {
                 spyModeEnabled.setSelected(false);
                 logToConsole("Marker mode enabled - Spy mode OFF");
             }
+
+            updateSettings();
+
+            logToConsole("Marker Mode: " + markerMode);
         });
 
         keepRecordingsEnabled.addActionListener(e -> {
@@ -201,44 +218,61 @@ public class DeadParrotGUI extends JFrame {
 
         saveToDesktopButton = new JButton("Save to Desktop");
         saveToDesktopButton.setToolTipText("Save recordings to desktop folder");
+
         saveToDesktopButton.addActionListener(e -> {
-            chooseDirectoryButton.setEnabled(true);
+
             Settings.SAVE_RECORDINGS_TO_DESKTOP = true;
             Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR = false;
+
             saveToDesktopButton.setEnabled(false);
+            chooseDirectoryButton.setEnabled(true);
             openDirectoryButton.setEnabled(true);
+
             FileUtils.verifyAndCreateOutputFolder(Settings.OUTPUT_DESKTOP_FOLDER_PATH);
+
             updateSettings();
+
             logToConsole("Saving recordings to desktop folder");
         });
 
         chooseDirectoryButton = new JButton("Choose Directory");
         chooseDirectoryButton.setToolTipText("Choose a custom directory for recordings");
+
         chooseDirectoryButton.addActionListener(e -> {
+
             JFileChooser chooser = new JFileChooser();
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
             int returnVal = chooser.showOpenDialog(this);
+
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-                Settings.CUSTOM_RECORDINGS_DIRECTORY = chooser.getSelectedFile().getAbsolutePath();
+
+                String selectedDirectory = chooser.getSelectedFile().getAbsolutePath() + Constants.CUSTOM_RECORDINGS_DIRECTORY_PREFIX;
+                FileUtils.verifyAndCreateOutputFolder(selectedDirectory);
+
+                Settings.CUSTOM_RECORDINGS_DIRECTORY = selectedDirectory;
                 Settings.SAVE_RECORDINGS_TO_DESKTOP = false;
-                saveToDesktopButton.setEnabled(true);
                 Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR = true;
+
+                saveToDesktopButton.setEnabled(true);
                 openDirectoryButton.setEnabled(true);
+
+                FileUtils.verifyAndCreateOutputFolder(selectedDirectory);
+
                 updateSettings();
-                FileUtils.verifyAndCreateOutputFolder(Settings.CUSTOM_RECORDINGS_DIRECTORY);
-                logToConsole("Custom recordings directory set to: " + Settings.CUSTOM_RECORDINGS_DIRECTORY);
+
+                logToConsole("Saving recordings to: " + selectedDirectory);
             }
         });
 
         openDirectoryButton = new JButton("Open Directory");
         openDirectoryButton.setToolTipText("Open recordings folder");
 
-        if (Settings.CUSTOM_RECORDINGS_DIRECTORY == null || Settings.OUTPUT_DESKTOP_FOLDER_PATH == null) {
-            openDirectoryButton.setEnabled(false);
-        }
+        boolean hasOutputDirectory = (Settings.SAVE_RECORDINGS_TO_DESKTOP && Settings.OUTPUT_DESKTOP_FOLDER_PATH != null) || (Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR && Settings.CUSTOM_RECORDINGS_DIRECTORY != null);
+
+        openDirectoryButton.setEnabled(hasOutputDirectory);
 
         openDirectoryButton.addActionListener(e -> {
-            updateSettings();
             FileUtils.openDestinationFolder();
         });
 
@@ -430,10 +464,18 @@ public class DeadParrotGUI extends JFrame {
         spyModeEnabled.setSelected(Settings.SPY_MODE);
         markerModeEnabled.setSelected(Settings.MARKER_MODE);
         keepRecordingsEnabled.setSelected(Settings.KEEP_RECORDINGS);
-        saveToDesktopButton.setSelected(Settings.SAVE_RECORDINGS_TO_DESKTOP);
         openOSSettingsEnabled.setSelected(Settings.OPEN_OS_RECORDING_SETTINGS);
         easterEggEnabled.setSelected(Settings.EASTER_EGG);
         darkModeEnabled.setSelected(Settings.DARK_MODE);
+
+        if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
+            saveToDesktopButton.setEnabled(false);
+            chooseDirectoryButton.setEnabled(true);
+            openDirectoryButton.setEnabled(true);
+            FileUtils.verifyAndCreateOutputFolder(Settings.OUTPUT_DESKTOP_FOLDER_PATH);
+        } else {
+            saveToDesktopButton.setEnabled(true);
+        }
 
         // Ensure look and feel is set correctly based on loaded settings
         setLookAndFeel(Settings.DARK_MODE);
@@ -446,7 +488,6 @@ public class DeadParrotGUI extends JFrame {
         Settings.SPY_MODE = spyModeEnabled.isSelected();
         Settings.MARKER_MODE = markerModeEnabled.isSelected();
         Settings.KEEP_RECORDINGS = keepRecordingsEnabled.isSelected();
-        Settings.SAVE_RECORDINGS_TO_DESKTOP = saveToDesktopButton.isSelected(); // TODO: Investigate if relevant
         Settings.OPEN_OS_RECORDING_SETTINGS = openOSSettingsEnabled.isSelected();
         Settings.EASTER_EGG = easterEggEnabled.isSelected();
         Settings.DARK_MODE = darkModeEnabled.isSelected();

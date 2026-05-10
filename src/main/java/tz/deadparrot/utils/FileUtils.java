@@ -63,7 +63,6 @@ public class FileUtils {
         if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
             outputFile = new File(Settings.OUTPUT_DESKTOP_FOLDER_PATH + Constants.FILENAME_PREFIX + timestamp + Constants.FILENAME_EXTENSION);
         } else if (Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR) {
-            verifyAndCreateOutputFolder(Settings.CUSTOM_RECORDINGS_DIRECTORY);
             outputFile = new File(Settings.CUSTOM_RECORDINGS_DIRECTORY + Constants.FILENAME_PREFIX + timestamp + Constants.FILENAME_EXTENSION);
         }
         return outputFile;
@@ -74,7 +73,7 @@ public class FileUtils {
         String path = null;
 
         if (Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR) {
-            path = Settings.CUSTOM_RECORDINGS_DIRECTORY + Constants.CUSTOM_RECORDINGS_DIRECTORY_PREFIX;
+            path = Settings.CUSTOM_RECORDINGS_DIRECTORY;
 
         } else if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
             path = Settings.OUTPUT_DESKTOP_FOLDER_PATH;
