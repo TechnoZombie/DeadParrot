@@ -73,7 +73,9 @@ public class Settings {
     public static boolean KEEP_RECORDINGS = true;
     public static boolean SAVE_RECORDINGS_TO_DESKTOP = true;
     public static boolean SAVE_RECORDINGS_TO_CUSTOM_DIR = false;
-    
+    public static String OUTPUT_DESKTOP_FOLDER_PATH;
+    public static String CUSTOM_RECORDINGS_DIRECTORY;
+
     // Silence Detection Settings
     /**
      * Amplitude threshold below which audio is considered silence.

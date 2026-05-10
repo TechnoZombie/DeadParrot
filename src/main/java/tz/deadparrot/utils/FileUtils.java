@@ -33,11 +33,11 @@ public class FileUtils {
         if (osName.contains(Constants.LINUX_OS)) {
             if (showLogs) log.info(Constants.RUNNING_LINUX);
             Constants.IS_LINUX = true;
-            Constants.OUTPUT_DESKTOP_FOLDER_PATH = Constants.LINUX_DESKTOP_PATH;
+            Settings.OUTPUT_DESKTOP_FOLDER_PATH = Constants.LINUX_DESKTOP_PATH;
         } else if (osName.contains(Constants.WINDOWS_OS)) {
             if (showLogs) log.info(Constants.RUNNING_WINDOWS);
             Constants.IS_WINDOWS = true;
-            Constants.OUTPUT_DESKTOP_FOLDER_PATH = Constants.WINDOWS_DESKTOP_PATH;
+            Settings.OUTPUT_DESKTOP_FOLDER_PATH = Constants.WINDOWS_DESKTOP_PATH;
         } else {
             Settings.SAVE_RECORDINGS_TO_DESKTOP = false;
         }
@@ -61,10 +61,10 @@ public class FileUtils {
         File outputFile = null;
 
         if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
-            outputFile = new File(Constants.OUTPUT_DESKTOP_FOLDER_PATH + Constants.FILENAME_PREFIX + timestamp + Constants.FILENAME_EXTENSION);
+            outputFile = new File(Settings.OUTPUT_DESKTOP_FOLDER_PATH + Constants.FILENAME_PREFIX + timestamp + Constants.FILENAME_EXTENSION);
         } else if (Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR) {
-            verifyAndCreateOutputFolder(Constants.CUSTOM_RECORDINGS_DIRECTORY);
-            outputFile = new File(Constants.CUSTOM_RECORDINGS_DIRECTORY + Constants.FILENAME_PREFIX + timestamp + Constants.FILENAME_EXTENSION);
+            verifyAndCreateOutputFolder(Settings.CUSTOM_RECORDINGS_DIRECTORY);
+            outputFile = new File(Settings.CUSTOM_RECORDINGS_DIRECTORY + Constants.FILENAME_PREFIX + timestamp + Constants.FILENAME_EXTENSION);
         }
         return outputFile;
     }
@@ -74,10 +74,10 @@ public class FileUtils {
         String path = null;
 
         if (Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR) {
-            path = Constants.CUSTOM_RECORDINGS_DIRECTORY;
+            path = Settings.CUSTOM_RECORDINGS_DIRECTORY + Constants.CUSTOM_RECORDINGS_DIRECTORY_PREFIX;
 
         } else if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
-            path = Constants.OUTPUT_DESKTOP_FOLDER_PATH;
+            path = Settings.OUTPUT_DESKTOP_FOLDER_PATH;
         }
 
         if (path == null) {

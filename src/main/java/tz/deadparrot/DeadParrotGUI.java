@@ -56,6 +56,7 @@ public class DeadParrotGUI extends JFrame {
         initializeGUI();
         setupLogAppender();
         loadCurrentSettings();
+        FileUtils.detectOS(false);
     }
 
     private void setupLookAndFeel() {
@@ -206,10 +207,9 @@ public class DeadParrotGUI extends JFrame {
             Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR = false;
             saveToDesktopButton.setEnabled(false);
             openDirectoryButton.setEnabled(true);
-            FileUtils.detectOS(false);
-            FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_DESKTOP_FOLDER_PATH);
+            FileUtils.verifyAndCreateOutputFolder(Settings.OUTPUT_DESKTOP_FOLDER_PATH);
             updateSettings();
-            logToConsole("Save to Desktop: " + saveToDesktopButton.isSelected());
+            logToConsole("Saving recordings to desktop folder");
         });
 
         chooseDirectoryButton = new JButton("Choose Directory");
@@ -219,20 +219,21 @@ public class DeadParrotGUI extends JFrame {
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             int returnVal = chooser.showOpenDialog(this);
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-                Constants.CUSTOM_RECORDINGS_DIRECTORY = chooser.getSelectedFile().getAbsolutePath();
+                Settings.CUSTOM_RECORDINGS_DIRECTORY = chooser.getSelectedFile().getAbsolutePath();
                 Settings.SAVE_RECORDINGS_TO_DESKTOP = false;
                 saveToDesktopButton.setEnabled(true);
                 Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR = true;
+                openDirectoryButton.setEnabled(true);
                 updateSettings();
-                FileUtils.verifyAndCreateOutputFolder(Constants.CUSTOM_RECORDINGS_DIRECTORY);
-                logToConsole("Custom recordings directory set to: " + Constants.CUSTOM_RECORDINGS_DIRECTORY);
+                FileUtils.verifyAndCreateOutputFolder(Settings.CUSTOM_RECORDINGS_DIRECTORY);
+                logToConsole("Custom recordings directory set to: " + Settings.CUSTOM_RECORDINGS_DIRECTORY);
             }
         });
 
         openDirectoryButton = new JButton("Open Directory");
         openDirectoryButton.setToolTipText("Open recordings folder");
 
-        if (Constants.CUSTOM_RECORDINGS_DIRECTORY == null || Constants.OUTPUT_DESKTOP_FOLDER_PATH == null) {
+        if (Settings.CUSTOM_RECORDINGS_DIRECTORY == null || Settings.OUTPUT_DESKTOP_FOLDER_PATH == null) {
             openDirectoryButton.setEnabled(false);
         }
 
@@ -249,27 +250,26 @@ public class DeadParrotGUI extends JFrame {
         gbc.gridx = 2;
         panel.add(keepRecordingsEnabled, gbc);
 
-        gbc.gridx = 4;
+        gbc.gridx = 3;
         panel.add(openOSSettingsEnabled, gbc);
-        gbc.gridx = 5;
+        gbc.gridx = 4;
         panel.add(easterEggEnabled, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 1;
         panel.add(darkModeEnabled, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 2;
         panel.add(saveToDesktopButton, gbc);
 
         gbc.gridx = 1;
-        gbc.gridy = 4;
+        gbc.gridy = 2;
         panel.add(chooseDirectoryButton, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 3;
         panel.add(openDirectoryButton, gbc);
-
 
         return panel;
     }
@@ -292,13 +292,7 @@ public class DeadParrotGUI extends JFrame {
             }
         });
 
-        openRecordingSettingsButton.addActionListener(e -> {
-            if (isRunning) {
-                SoundSettingsOpener.openRecordingSettings();
-            } else {
-                logToConsole("Start the repeater before opening recording settings.");
-            }
-        });
+        openRecordingSettingsButton.addActionListener(e -> SoundSettingsOpener.openRecordingSettings());
 
         panel.add(runAudioProbeButton);
         panel.add(openRecordingSettingsButton);
@@ -370,12 +364,10 @@ public class DeadParrotGUI extends JFrame {
                     SwingUtilities.invokeLater(() -> {
                         logToConsole("Error starting repeater: " + ex.getMessage());
                         log.error("Error starting repeater", ex);
-                        stopRepeater();
+                        stopRepeater(); // this sets isRunning = false and resets the UI
                     });
                 }
             });
-
-            processorThread.start();
 
             isRunning = true;
             startButton.setEnabled(false);
@@ -384,7 +376,10 @@ public class DeadParrotGUI extends JFrame {
             recordingStatusLabel.setText("Audio Recorder: Active");
             listenerStatusLabel.setText("Listener: Active");
 
+            processorThread.start();
+
         } catch (Exception ex) {
+            isRunning = false;
             logToConsole("Failed to start repeater: " + ex.getMessage());
             log.error("Failed to start repeater", ex);
         }
@@ -451,7 +446,7 @@ public class DeadParrotGUI extends JFrame {
         Settings.SPY_MODE = spyModeEnabled.isSelected();
         Settings.MARKER_MODE = markerModeEnabled.isSelected();
         Settings.KEEP_RECORDINGS = keepRecordingsEnabled.isSelected();
-        Settings.SAVE_RECORDINGS_TO_DESKTOP = saveToDesktopButton.isSelected();
+        Settings.SAVE_RECORDINGS_TO_DESKTOP = saveToDesktopButton.isSelected(); // TODO: Investigate if relevant
         Settings.OPEN_OS_RECORDING_SETTINGS = openOSSettingsEnabled.isSelected();
         Settings.EASTER_EGG = easterEggEnabled.isSelected();
         Settings.DARK_MODE = darkModeEnabled.isSelected();
@@ -496,7 +491,6 @@ public class DeadParrotGUI extends JFrame {
                 UIManager.setLookAndFeel(new FlatLightLaf());
             }
             SwingUtilities.updateComponentTreeUI(this);
-            this.pack();
         } catch (Exception e) {
             log.error("Failed to set look and feel", e);
         }

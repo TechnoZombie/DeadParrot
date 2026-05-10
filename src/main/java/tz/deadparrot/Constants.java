@@ -47,8 +47,7 @@ public class Constants {
     // FileUtils
     public static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("dd-MM-yyyy_HH.mm.ss");
     public static final String OUTPUT_FOLDER_PATH = "Recordings/";
-    public static String OUTPUT_DESKTOP_FOLDER_PATH;
-    public static String CUSTOM_RECORDINGS_DIRECTORY;
+
     public static String CUSTOM_RECORDINGS_DIRECTORY_PREFIX = "\\Recordings\\";
     public static final String OUTPUT_TEMP_FILE_NAME = "tempRecord.wav";
     public static final String WINDOWS_DESKTOP_PATH = System.getProperty("user.home") + "\\Desktop\\Recordings\\";
