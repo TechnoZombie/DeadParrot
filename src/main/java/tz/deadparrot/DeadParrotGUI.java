@@ -20,6 +20,7 @@ import com.formdev.flatlaf.FlatDarculaLaf;
 import tz.deadparrot.utils.AudioFormatProbe;
 import tz.deadparrot.utils.FileUtils;
 import tz.deadparrot.utils.SoundSettingsOpener;
+import tz.deadparrot.utils.SystemUtils;
 
 @Slf4j
 public class DeadParrotGUI extends JFrame {
@@ -52,7 +53,7 @@ public class DeadParrotGUI extends JFrame {
     private GuiLogAppender guiLogAppender;
 
     public DeadParrotGUI() {
-        FileUtils.detectOS(false);
+        SystemUtils.detectOS(false);
         setupLookAndFeel();
         initializeGUI();
         setupLogAppender();
@@ -79,7 +80,12 @@ public class DeadParrotGUI extends JFrame {
     private void initializeGUI() {
         setTitle("DeadParrot Ham Radio Repeater v2.0");
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        setSize(900, 650);
+        // setSize(1200, 650);
+
+        // Sets the window size to a percentage of the screen resolution. For example, 75% = 0.75
+        Dimension size = SystemUtils.getScaledScreenSize(0.75);
+        setSize(size);
+
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
         setIconImage(new ImageIcon(getClass().getResource("/img/DeadParrotSmall.png")).getImage());

@@ -1,11 +1,12 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
-import tz.deadparrot.utils.Printer;
 import tz.deadparrot.utils.AudioResourcesPreloader;
 import tz.deadparrot.utils.FileUtils;
-import tz.deadparrot.utils.ParrotQuotes;
 import tz.deadparrot.utils.SoundSettingsOpener;
+import tz.deadparrot.utils.SystemUtils;
+import tz.deadparrot.utils.Printer;
+import tz.deadparrot.utils.ParrotQuotes;
 
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
@@ -17,7 +18,7 @@ public class Processor {
 
     public void init() {
 
-        FileUtils.detectOS(true);
+        SystemUtils.detectOS(true);
         applySettings();
         initializeComponents();
         setupShutdownHook();
