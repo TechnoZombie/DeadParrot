@@ -60,7 +60,7 @@ public class Processor {
         }
 
         if (Settings.PRINT_SETTINGS) {
-            new Printer().printCurrentSettings();
+            Printer.printCurrentSettingsV2();
         }
     }
 

@@ -39,7 +39,7 @@ public class Settings {
      *  Prints full settings to console on boot
      *  Default: false
      */
-    public static final boolean PRINT_SETTINGS = false;
+    public static boolean PRINT_SETTINGS = true;
 
     /**
      * When true, opens OS sound recording settings.

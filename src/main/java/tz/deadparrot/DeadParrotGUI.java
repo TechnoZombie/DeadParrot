@@ -17,14 +17,12 @@ import org.slf4j.LoggerFactory;
 
 import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.FlatDarculaLaf;
-import tz.deadparrot.utils.AudioFormatProbe;
-import tz.deadparrot.utils.FileUtils;
-import tz.deadparrot.utils.SoundSettingsOpener;
-import tz.deadparrot.utils.SystemUtils;
+import tz.deadparrot.utils.*;
 
 @Slf4j
 public class DeadParrotGUI extends JFrame {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private boolean updatingUI = false;
 
     // GUI components
     private JTextArea consoleOutput;
@@ -37,6 +35,7 @@ public class DeadParrotGUI extends JFrame {
     private JCheckBox spyModeEnabled;
     private JCheckBox markerModeEnabled;
     private JCheckBox keepRecordingsEnabled;
+    private JCheckBox printSettingsEnabled;
 
     private JCheckBox openOSSettingsEnabled;
     private JCheckBox easterEggEnabled;
@@ -53,6 +52,7 @@ public class DeadParrotGUI extends JFrame {
     private GuiLogAppender guiLogAppender;
 
     public DeadParrotGUI() {
+        SettingsPersistence.loadSettings();
         SystemUtils.detectOS(false);
         setupLookAndFeel();
         initializeGUI();
@@ -151,6 +151,7 @@ public class DeadParrotGUI extends JFrame {
         spyModeEnabled = new JCheckBox("Spy Mode");
         markerModeEnabled = new JCheckBox("Marker Mode");
         keepRecordingsEnabled = new JCheckBox("Keep Recordings");
+        printSettingsEnabled = new JCheckBox("Print Settings on Start");
         openOSSettingsEnabled = new JCheckBox("Open OS Recording Settings");
         easterEggEnabled = new JCheckBox("Easter Egg");
         darkModeEnabled = new JCheckBox("Dark Mode");
@@ -158,70 +159,80 @@ public class DeadParrotGUI extends JFrame {
         spyModeEnabled.setToolTipText("Enable spy mode - automatically enables keep recordings and disables marker mode");
         markerModeEnabled.setToolTipText("Enable marker mode for audio marking");
         keepRecordingsEnabled.setToolTipText("Keep recorded audio files");
+        printSettingsEnabled.setToolTipText("Print Settings on Start");
 
         openOSSettingsEnabled.setToolTipText("Open OS recording settings on startup");
         easterEggEnabled.setToolTipText("Enable Easter egg messages");
         darkModeEnabled.setToolTipText("Enable dark mode for the interface");
 
         spyModeEnabled.addActionListener(e -> {
-
-            boolean spyMode = spyModeEnabled.isSelected();
-
-            if (spyMode) {
-
-                keepRecordingsEnabled.setSelected(true);
-                keepRecordingsEnabled.setEnabled(false);
-
-                markerModeEnabled.setSelected(false);
-                markerModeEnabled.setEnabled(false);
-
-                logToConsole(Constants.SPY_MODE_ENABLED);
-
-            } else {
-
-                keepRecordingsEnabled.setEnabled(true);
-                markerModeEnabled.setEnabled(true);
-
-                logToConsole(Constants.SPY_MODE_DISABLED);
+            if (updatingUI) {
+                return;
             }
-
             updateSettings();
+
+            if (Settings.SPY_MODE) {
+                logToConsole(Constants.SPY_MODE_ENABLED);
+            } else {
+                logToConsole(Constants.RUNNING_IN_STANDARD_MODE);
+            }
         });
 
         markerModeEnabled.addActionListener(e -> {
-
-            boolean markerMode = markerModeEnabled.isSelected();
-
-            if (markerMode) {
-                spyModeEnabled.setSelected(false);
-                logToConsole("Marker mode enabled - Spy mode OFF");
+            if (updatingUI) {
+                return;
             }
-
             updateSettings();
 
-            logToConsole("Marker Mode: " + markerMode);
+            logToConsole("Marker Mode: " + Settings.MARKER_MODE);
         });
 
         keepRecordingsEnabled.addActionListener(e -> {
+            if (updatingUI) {
+                return;
+            }
             updateSettings();
-            logToConsole("Keep Recordings: " + keepRecordingsEnabled.isSelected());
+
+            logToConsole("Keep Recordings: " + Settings.KEEP_RECORDINGS);
+        });
+
+        printSettingsEnabled.addActionListener(e -> {
+            if (updatingUI) {
+                return;
+            }
+            updateSettings();
+
+            logToConsole("Print Settings on Start: " + Settings.PRINT_SETTINGS);
         });
 
         openOSSettingsEnabled.addActionListener(e -> {
+            if (updatingUI) {
+                return;
+            }
             updateSettings();
-            logToConsole("Open OS Settings: " + openOSSettingsEnabled.isSelected());
+
+            logToConsole("Open OS Settings: " + Settings.OPEN_OS_RECORDING_SETTINGS);
         });
 
         easterEggEnabled.addActionListener(e -> {
+            if (updatingUI) {
+                return;
+            }
             updateSettings();
-            logToConsole("Easter Egg: " + easterEggEnabled.isSelected());
+
+            logToConsole("Easter Egg: " + Settings.EASTER_EGG);
         });
 
         darkModeEnabled.addActionListener(e -> {
+            if (updatingUI) {
+                return;
+            }
             updateSettings();
-            logToConsole("Dark Mode: " + darkModeEnabled.isSelected());
-            setLookAndFeel(darkModeEnabled.isSelected());
-            updateConsoleColors(darkModeEnabled.isSelected());
+
+            setLookAndFeel(Settings.DARK_MODE);
+            updateConsoleColors(Settings.DARK_MODE);
+
+            logToConsole("Dark Mode: " + Settings.DARK_MODE);
         });
 
         saveToDesktopButton = new JButton("Save to Desktop");
@@ -232,23 +243,21 @@ public class DeadParrotGUI extends JFrame {
             Settings.SAVE_RECORDINGS_TO_DESKTOP = true;
             Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR = false;
 
-            saveToDesktopButton.setEnabled(false);
-            chooseDirectoryButton.setEnabled(true);
-            openDirectoryButton.setEnabled(true);
-
             FileUtils.verifyAndCreateOutputFolder(Settings.OUTPUT_DESKTOP_FOLDER_PATH);
 
-            updateSettings();
+            refreshSettingsUIState();
 
             logToConsole("Saving recordings to desktop folder");
         });
 
         chooseDirectoryButton = new JButton("Choose Directory");
+
         chooseDirectoryButton.setToolTipText("Choose a custom directory for recordings");
 
         chooseDirectoryButton.addActionListener(e -> {
 
             JFileChooser chooser = new JFileChooser();
+
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
             int returnVal = chooser.showOpenDialog(this);
@@ -256,33 +265,27 @@ public class DeadParrotGUI extends JFrame {
             if (returnVal == JFileChooser.APPROVE_OPTION) {
 
                 String selectedDirectory = chooser.getSelectedFile().getAbsolutePath() + Constants.CUSTOM_RECORDINGS_DIRECTORY_PREFIX;
+
                 FileUtils.verifyAndCreateOutputFolder(selectedDirectory);
 
                 Settings.CUSTOM_RECORDINGS_DIRECTORY = selectedDirectory;
+
                 Settings.SAVE_RECORDINGS_TO_DESKTOP = false;
                 Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR = true;
 
-                saveToDesktopButton.setEnabled(true);
-                openDirectoryButton.setEnabled(true);
-
-                FileUtils.verifyAndCreateOutputFolder(selectedDirectory);
-
-                updateSettings();
+                refreshSettingsUIState();
 
                 logToConsole("Saving recordings to: " + selectedDirectory);
             }
         });
 
         openDirectoryButton = new JButton("Open Directory");
+
         openDirectoryButton.setToolTipText("Open recordings folder");
 
-        boolean hasOutputDirectory = (Settings.SAVE_RECORDINGS_TO_DESKTOP && Settings.OUTPUT_DESKTOP_FOLDER_PATH != null) || (Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR && Settings.CUSTOM_RECORDINGS_DIRECTORY != null);
+        refreshSettingsUIState();
 
-        openDirectoryButton.setEnabled(hasOutputDirectory);
-
-        openDirectoryButton.addActionListener(e -> {
-            FileUtils.openDestinationFolder();
-        });
+        openDirectoryButton.addActionListener(e -> FileUtils.openDestinationFolder());
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -291,15 +294,16 @@ public class DeadParrotGUI extends JFrame {
         panel.add(markerModeEnabled, gbc);
         gbc.gridx = 2;
         panel.add(keepRecordingsEnabled, gbc);
-
         gbc.gridx = 3;
-        panel.add(openOSSettingsEnabled, gbc);
-        gbc.gridx = 4;
-        panel.add(easterEggEnabled, gbc);
+        panel.add(printSettingsEnabled, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
         panel.add(darkModeEnabled, gbc);
+        gbc.gridx = 1;
+        panel.add(openOSSettingsEnabled, gbc);
+        gbc.gridx = 2;
+        panel.add(easterEggEnabled, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 2;
@@ -326,7 +330,8 @@ public class DeadParrotGUI extends JFrame {
 
         runAudioProbeButton.setToolTipText("Probe available audio formats and devices");
         openPlaybackSettingsButton.setToolTipText("Open System Audio Playback Settings");
-        openRecordingSettingsButton.setToolTipText("Open System Audio Recording Settings");;
+        openRecordingSettingsButton.setToolTipText("Open System Audio Recording Settings");
+        ;
 
         runAudioProbeButton.addActionListener(e -> {
 
@@ -345,11 +350,9 @@ public class DeadParrotGUI extends JFrame {
                     log.info(Constants.AUDIO_PROBE_COMPLETED);
 
                 } finally {
-                    SwingUtilities.invokeLater(() ->
-                            runAudioProbeButton.setEnabled(true)
-                    );
+                    SwingUtilities.invokeLater(() -> runAudioProbeButton.setEnabled(true));
                 }
-            }).start();
+            }, "AudioProbeThread").start();
         });
 
         openPlaybackSettingsButton.addActionListener(e -> SoundSettingsOpener.openPlaybackSettings());
@@ -490,23 +493,18 @@ public class DeadParrotGUI extends JFrame {
     }
 
     private void loadCurrentSettings() {
+
         spyModeEnabled.setSelected(Settings.SPY_MODE);
         markerModeEnabled.setSelected(Settings.MARKER_MODE);
         keepRecordingsEnabled.setSelected(Settings.KEEP_RECORDINGS);
+
         openOSSettingsEnabled.setSelected(Settings.OPEN_OS_RECORDING_SETTINGS);
+
         easterEggEnabled.setSelected(Settings.EASTER_EGG);
         darkModeEnabled.setSelected(Settings.DARK_MODE);
 
-        if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
-            saveToDesktopButton.setEnabled(false);
-            chooseDirectoryButton.setEnabled(true);
-            openDirectoryButton.setEnabled(true);
-            FileUtils.verifyAndCreateOutputFolder(Settings.OUTPUT_DESKTOP_FOLDER_PATH);
-        } else {
-            saveToDesktopButton.setEnabled(true);
-        }
+        refreshSettingsUIState();
 
-        // Ensure look and feel is set correctly based on loaded settings
         setLookAndFeel(Settings.DARK_MODE);
         updateConsoleColors(Settings.DARK_MODE);
 
@@ -514,12 +512,27 @@ public class DeadParrotGUI extends JFrame {
     }
 
     private void updateSettings() {
+
         Settings.SPY_MODE = spyModeEnabled.isSelected();
+
+        if (Settings.SPY_MODE) {
+            Settings.MARKER_MODE = false;
+            Settings.KEEP_RECORDINGS = true;
+        } else {
+            Settings.MARKER_MODE = markerModeEnabled.isSelected();
+            Settings.KEEP_RECORDINGS = keepRecordingsEnabled.isSelected();
+        }
+
         Settings.MARKER_MODE = markerModeEnabled.isSelected();
         Settings.KEEP_RECORDINGS = keepRecordingsEnabled.isSelected();
+
         Settings.OPEN_OS_RECORDING_SETTINGS = openOSSettingsEnabled.isSelected();
+
         Settings.EASTER_EGG = easterEggEnabled.isSelected();
+
         Settings.DARK_MODE = darkModeEnabled.isSelected();
+
+        SettingsPersistence.saveSettings();
     }
 
     private void cleanup() {
@@ -573,6 +586,35 @@ public class DeadParrotGUI extends JFrame {
         } else {
             consoleOutput.setBackground(Color.WHITE);
             consoleOutput.setForeground(Color.BLACK);
+        }
+    }
+
+    private void refreshSettingsUIState() {
+
+        updatingUI = true;
+
+        try {
+
+            boolean spyMode = Settings.SPY_MODE;
+
+            keepRecordingsEnabled.setEnabled(!spyMode);
+            markerModeEnabled.setEnabled(!spyMode);
+
+            if (spyMode) {
+                keepRecordingsEnabled.setSelected(true);
+                markerModeEnabled.setSelected(false);
+            }
+
+            saveToDesktopButton.setEnabled(!Settings.SAVE_RECORDINGS_TO_DESKTOP);
+
+            chooseDirectoryButton.setEnabled(true);
+
+            boolean hasValidOutputDirectory = (Settings.SAVE_RECORDINGS_TO_DESKTOP && Settings.OUTPUT_DESKTOP_FOLDER_PATH != null) || (Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR && Settings.CUSTOM_RECORDINGS_DIRECTORY != null);
+
+            openDirectoryButton.setEnabled(hasValidOutputDirectory);
+
+        } finally {
+            updatingUI = false;
         }
     }
 }
