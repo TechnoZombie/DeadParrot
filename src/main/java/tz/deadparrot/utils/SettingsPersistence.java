@@ -23,6 +23,8 @@ public class SettingsPersistence {
 
         properties.setProperty("keepRecordings", String.valueOf(Settings.KEEP_RECORDINGS));
 
+        properties.setProperty("printSettings", String.valueOf(Settings.PRINT_SETTINGS));
+
         properties.setProperty("darkMode", String.valueOf(Settings.DARK_MODE));
 
         properties.setProperty("openOSRecordingSettings", String.valueOf(Settings.OPEN_OS_RECORDING_SETTINGS));
@@ -57,6 +59,8 @@ public class SettingsPersistence {
             Settings.MARKER_MODE = Boolean.parseBoolean(properties.getProperty("markerMode", "false"));
 
             Settings.KEEP_RECORDINGS = Boolean.parseBoolean(properties.getProperty("keepRecordings", "false"));
+
+            Settings.PRINT_SETTINGS = Boolean.parseBoolean(properties.getProperty("printSettings", "false"));
 
             Settings.DARK_MODE = Boolean.parseBoolean(properties.getProperty("darkMode", "false"));
 

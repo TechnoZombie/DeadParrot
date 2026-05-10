@@ -331,7 +331,6 @@ public class DeadParrotGUI extends JFrame {
         runAudioProbeButton.setToolTipText("Probe available audio formats and devices");
         openPlaybackSettingsButton.setToolTipText("Open System Audio Playback Settings");
         openRecordingSettingsButton.setToolTipText("Open System Audio Recording Settings");
-        ;
 
         runAudioProbeButton.addActionListener(e -> {
 
@@ -497,7 +496,7 @@ public class DeadParrotGUI extends JFrame {
         spyModeEnabled.setSelected(Settings.SPY_MODE);
         markerModeEnabled.setSelected(Settings.MARKER_MODE);
         keepRecordingsEnabled.setSelected(Settings.KEEP_RECORDINGS);
-
+        printSettingsEnabled.setSelected(Settings.PRINT_SETTINGS);
         openOSSettingsEnabled.setSelected(Settings.OPEN_OS_RECORDING_SETTINGS);
 
         easterEggEnabled.setSelected(Settings.EASTER_EGG);
@@ -518,10 +517,10 @@ public class DeadParrotGUI extends JFrame {
         if (Settings.SPY_MODE) {
             Settings.MARKER_MODE = false;
             Settings.KEEP_RECORDINGS = true;
-        } else {
+        } /*else {
             Settings.MARKER_MODE = markerModeEnabled.isSelected();
             Settings.KEEP_RECORDINGS = keepRecordingsEnabled.isSelected();
-        }
+        }*/
 
         Settings.MARKER_MODE = markerModeEnabled.isSelected();
         Settings.KEEP_RECORDINGS = keepRecordingsEnabled.isSelected();
