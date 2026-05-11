@@ -32,6 +32,8 @@ public class DeadParrotGUI extends JFrame {
     private JButton chooseDirectoryButton;
     private JButton openDirectoryButton;
 
+    private Color stopButtonColor = new Color(155, 0, 20);
+
     private JLabel dirOutput;
 
     private JCheckBox spyModeEnabled;
@@ -123,9 +125,11 @@ public class DeadParrotGUI extends JFrame {
         panel.setBorder(new TitledBorder("Repeater Controls"));
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+       // startButton = new JButton("▶ START");
         startButton = new JButton("▶ START");
         stopButton = new JButton("■ STOP");
-        stopButton.setEnabled(false);
+       // stopButton.setEnabled(true);
+        stopButton.setForeground(stopButtonColor);
 
         startButton.addActionListener(e -> {
             if (!isRunning) startRepeater();
@@ -455,8 +459,10 @@ public class DeadParrotGUI extends JFrame {
             });
 
             isRunning = true;
-            startButton.setEnabled(false);
-            stopButton.setEnabled(true);
+            //startButton.setEnabled(false);
+            startButton.setForeground(Color.GREEN);
+            //stopButton.setEnabled(true);
+            stopButton.setForeground(null);
             statusLabel.setText("Status: Running");
             recordingStatusLabel.setText("Audio Recorder: Active");
             listenerStatusLabel.setText("Listener: Active");
@@ -481,8 +487,10 @@ public class DeadParrotGUI extends JFrame {
             }
 
             isRunning = false;
-            startButton.setEnabled(true);
-            stopButton.setEnabled(false);
+           // startButton.setEnabled(true);
+            startButton.setForeground(null);
+            //stopButton.setEnabled(false);
+            stopButton.setForeground(stopButtonColor);
             statusLabel.setText("Status: Stopped");
             recordingStatusLabel.setText("Audio Recorder: Idle");
             listenerStatusLabel.setText("Listener: Idle");
@@ -632,7 +640,7 @@ public class DeadParrotGUI extends JFrame {
 
             openDirectoryButton.setEnabled(hasValidOutputDirectory);
 
-            if (hasValidOutputDirectory) {
+            if (hasValidOutputDirectory && dirOutput != null) {
 
                 if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
 
