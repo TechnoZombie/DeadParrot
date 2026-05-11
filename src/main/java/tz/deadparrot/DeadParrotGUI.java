@@ -57,7 +57,7 @@ public class DeadParrotGUI extends JFrame {
 
     public DeadParrotGUI() {
         SettingsPersistence.loadSettings();
-        SystemUtils.detectOS(false);
+        SystemUtils.detectOSandSetPaths(false);
         setupLookAndFeel();
         initializeGUI();
         setupLogAppender();
@@ -558,6 +558,8 @@ public class DeadParrotGUI extends JFrame {
         Settings.EASTER_EGG = easterEggEnabled.isSelected();
 
         Settings.DARK_MODE = darkModeEnabled.isSelected();
+
+        Settings.PRINT_SETTINGS = printSettingsEnabled.isSelected();
 
         SettingsPersistence.saveSettings();
     }

@@ -18,7 +18,7 @@ public class Processor {
 
     public void init() {
 
-        SystemUtils.detectOS(true);
+        SystemUtils.detectOSandSetPaths(true);
         applySettings();
         initializeComponents();
         setupShutdownHook();

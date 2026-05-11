@@ -9,7 +9,18 @@ import java.awt.*;
 @Slf4j
 public class SystemUtils {
 
-    public static void detectOS(Boolean showLogs) {
+    public static String detectOS(Boolean showOnLog){
+        String detectedOS = System.getProperty("os.name").toLowerCase();
+
+        if (showOnLog) {
+            log.info(Constants.RUNNING_ON + "{}", detectedOS);
+        }
+
+        return detectedOS;
+
+    }
+
+    public static void detectOSandSetPaths(Boolean showLogs) {
         String osName = System.getProperty("os.name").toLowerCase();
         if (osName.contains(Constants.LINUX_OS)) {
             if (showLogs) log.info(Constants.RUNNING_LINUX);

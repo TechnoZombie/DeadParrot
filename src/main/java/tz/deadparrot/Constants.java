@@ -65,6 +65,7 @@ public class Constants {
     // SystemUtils
     public static final String WINDOWS_DESKTOP_PATH = System.getProperty("user.home") + "\\Desktop\\Recordings\\";
     public static final String LINUX_DESKTOP_PATH = System.getProperty("user.home") + "/Desktop/Recordings/";
+    public static final String RUNNING_ON = "Running on ";
     public static final String WINDOWS_OS = "windows";
     public static final String LINUX_OS = "linux";
     public static final String RUNNING_LINUX = "[INFO] Running on Linux OS. Setting Desktop path.";
