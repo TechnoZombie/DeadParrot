@@ -67,4 +67,4 @@ public class Constants {
     public static final String RUNNING_WINDOWS = "[INFO] Running on Windows OS. Setting Desktop path.";
     public static boolean IS_WINDOWS = false;
     public static boolean IS_LINUX = false;
-};
+}
