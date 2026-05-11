@@ -4,11 +4,6 @@ import java.time.format.DateTimeFormatter;
 
 public class Constants {
 
-    // GUI
-    public static final String STOP_BEFORE_RUNNING = "Stop the repeater before running the audio probe.";
-    public static final String AUDIO_PROBE_RUNNING = "Running audio probe...";
-    public static final String AUDIO_PROBE_COMPLETED = "Audio probe completed!";
-
     // Processor
     public static final String CREATED_FOLDER = "[OK] Created \"Recordings\" folder.";
     public static final String FOLDER_EXISTS = "[OK] \"Recordings\" folder exists.";
