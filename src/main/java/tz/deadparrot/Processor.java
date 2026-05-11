@@ -1,11 +1,12 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
-import tz.deadparrot.utils.Printer;
 import tz.deadparrot.utils.AudioResourcesPreloader;
 import tz.deadparrot.utils.FileUtils;
-import tz.deadparrot.utils.ParrotQuotes;
 import tz.deadparrot.utils.SoundSettingsOpener;
+import tz.deadparrot.utils.SystemUtils;
+import tz.deadparrot.utils.Printer;
+import tz.deadparrot.utils.ParrotQuotes;
 
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
@@ -17,7 +18,7 @@ public class Processor {
 
     public void init() {
 
-        FileUtils.detectOS();
+        SystemUtils.detectOSandSetPaths(true);
         applySettings();
         initializeComponents();
         setupShutdownHook();
@@ -34,7 +35,7 @@ public class Processor {
         if (Settings.SPY_MODE) {
             Settings.KEEP_RECORDINGS = true;
             Settings.MARKER_MODE = false;
-            log.warn(Constants.SPY_MODE_IS_ON);
+            log.warn(Constants.SPY_MODE_ENABLED);
         }
 
         if (Settings.MARKER_MODE) {
@@ -46,7 +47,9 @@ public class Processor {
         if (Settings.KEEP_RECORDINGS) {
             log.warn(Constants.KEEP_RECORDINGS_IS_ON);
             if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
-                FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_DESKTOP_FOLDER_PATH);
+                FileUtils.verifyAndCreateOutputFolder(Settings.OUTPUT_DESKTOP_FOLDER_PATH);
+            } else if (Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR) {
+                FileUtils.verifyAndCreateOutputFolder(Settings.CUSTOM_RECORDINGS_DIRECTORY);
             } else {
                 FileUtils.verifyAndCreateOutputFolder(Constants.OUTPUT_FOLDER_PATH);
             }
@@ -56,8 +59,8 @@ public class Processor {
             SoundSettingsOpener.openRecordingSettings();
         }
 
-        if(Settings.PRINT_SETTINGS) {
-            new Printer().printCurrentSettings();
+        if (Settings.PRINT_SETTINGS) {
+            Printer.printCurrentSettingsV2();
         }
     }
 

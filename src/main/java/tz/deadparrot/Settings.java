@@ -39,13 +39,13 @@ public class Settings {
      *  Prints full settings to console on boot
      *  Default: false
      */
-    public static final boolean PRINT_SETTINGS = false;
+    public static boolean PRINT_SETTINGS = true;
 
     /**
      * When true, opens OS sound recording settings.
      * Default: false
      */
-    public static boolean OPEN_OS_RECORDING_SETTINGS = true;
+    public static boolean OPEN_OS_RECORDING_SETTINGS = false;
 
     /**
      * When true, enables spy mode (audio recording only, no other features).
@@ -72,6 +72,9 @@ public class Settings {
      */
     public static boolean KEEP_RECORDINGS = true;
     public static boolean SAVE_RECORDINGS_TO_DESKTOP = true;
+    public static boolean SAVE_RECORDINGS_TO_CUSTOM_DIR = false;
+    public static String OUTPUT_DESKTOP_FOLDER_PATH;
+    public static String CUSTOM_RECORDINGS_DIRECTORY;
 
     // Silence Detection Settings
     /**
@@ -94,4 +97,5 @@ public class Settings {
     public static final int MAX_RECORDING_TIME_MS = 60000;
     public static boolean EASTER_EGG = false;
     public static boolean DARK_MODE = true;
+
 }

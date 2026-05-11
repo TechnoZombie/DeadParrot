@@ -1,11 +1,11 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
+import tz.deadparrot.utils.FileUtils;
 import tz.deadparrot.utils.WaveWriterUtil;
 
 import javax.sound.sampled.*;
 import java.io.*;
-import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
@@ -29,7 +29,7 @@ public class AudioRecorder {
     }
 
     public void record() throws LineUnavailableException {
-        outputFileGenerator();
+        outputFile = FileUtils.generateOutputFile();
         recorderLine.open();
         recorderLine.start();
 
@@ -81,23 +81,6 @@ public class AudioRecorder {
         if (!Settings.SPY_MODE) {
             audioPlayer.playLeadingPing();
             audioPlayer.play(outputFile);
-        }
-    }
-
-    private void outputFileGenerator() {
-        if (Settings.KEEP_RECORDINGS) {
-            String timestamp = LocalDateTime.now().format(Constants.TIMESTAMP_FORMAT);
-            if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
-                outputFile = new File(Constants.OUTPUT_DESKTOP_FOLDER_PATH +
-                        Constants.FILENAME_PREFIX + timestamp +
-                        Constants.FILENAME_EXTENSION);
-            } else {
-                outputFile = new File(Constants.OUTPUT_FOLDER_PATH +
-                        Constants.FILENAME_PREFIX + timestamp +
-                        Constants.FILENAME_EXTENSION);
-            }
-        } else {
-            outputFile = new File(Constants.OUTPUT_TEMP_FILE_NAME);
         }
     }
 

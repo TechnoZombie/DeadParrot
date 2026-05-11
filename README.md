@@ -5,6 +5,7 @@
 This project mimics the behavior of a repeater station by automatically handling sound detection, recording, and playback, with minimal setup.
 
 ---
+
 ## 📸 Screenshots
 <p align="center">
   <img src="images/dp01.png" width="30%">

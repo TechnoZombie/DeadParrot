@@ -8,7 +8,7 @@ import javax.swing.*;
  * DeadParrot Ham Radio Repeater
  *
  * @author TechnoZombie
- * @version 1.0
+ * @version 2.0
  */
 
 @Slf4j
