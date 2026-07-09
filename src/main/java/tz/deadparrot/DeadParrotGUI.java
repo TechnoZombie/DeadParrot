@@ -1,5 +1,6 @@
 package tz.deadparrot;
 
+import com.formdev.flatlaf.util.SystemInfo;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
@@ -65,6 +66,12 @@ public class DeadParrotGUI extends JFrame {
     }
 
     private void setupLookAndFeel() {
+        // Enable rounded window corners (macOS & Windows 11 native support)
+        if (SystemInfo.isLinux) {
+            JFrame.setDefaultLookAndFeelDecorated(true);
+            JDialog.setDefaultLookAndFeelDecorated(true);
+        }
+
         try {
             if (Settings.DARK_MODE) {
                 UIManager.setLookAndFeel(new FlatDarculaLaf());
@@ -85,6 +92,9 @@ public class DeadParrotGUI extends JFrame {
         setTitle("DeadParrot Ham Radio Repeater v2.0");
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         // setSize(1200, 650);
+
+        // rounded corners on macOS
+        getRootPane().putClientProperty("apple.awt.windowCornerRadius", 12); // macOS only
 
         // Sets the window size to a percentage of the screen resolution. For example, 75% = 0.75
         Dimension size = SystemUtils.getScaledScreenSize(0.75);
