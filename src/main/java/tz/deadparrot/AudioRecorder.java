@@ -17,72 +17,93 @@ public class AudioRecorder {
     File outputFile;
     Thread audioRecorderThread;
     WaveWriterUtil waveWriterUtil = new WaveWriterUtil();
+    
+public AudioRecorder() throws LineUnavailableException {
 
-    public AudioRecorder() throws LineUnavailableException {
-        if (!AudioSystem.isLineSupported(dataInfo)) {
-            log.error(Constants.LINE_NOT_SUPPORTED);
-        }
+    for (Mixer.Info mixerInfo : AudioSystem.getMixerInfo()) {
 
-        recorderLine = (TargetDataLine) AudioSystem.getLine(dataInfo);
-        recordingStream = new AudioInputStream(recorderLine);
-        log.info(Constants.LINE_IN_READY);
-    }
+        Mixer mixer = AudioSystem.getMixer(mixerInfo);
 
-    public void record() throws LineUnavailableException {
-        outputFile = FileUtils.generateOutputFile();
-        recorderLine.open();
-        recorderLine.start();
+        for (Line.Info lineInfo : mixer.getTargetLineInfo()) {
 
-        // Flags for controlling recording
-        AtomicBoolean recordingActive = new AtomicBoolean(true);
-        AtomicBoolean silenceDetected = new AtomicBoolean(false);
+            if (!TargetDataLine.class.isAssignableFrom(lineInfo.getLineClass()))
+                continue;
 
-        audioRecorderThread = new Thread(() -> {
             try {
-                recordWithMonitoring(recordingStream, outputFile,
-                        Settings.SILENCE_THRESHOLD, Settings.SILENCE_DURATION_MS,
-                        silenceDetected, recordingActive);
-            } catch (IOException e) {
-                log.error(Constants.RECORDING_FAILED, e);
-                throw new RuntimeException(e);
+
+                recorderLine = (TargetDataLine) mixer.getLine(lineInfo);
+
+                log.info("Using mixer: {}", mixerInfo.getName());
+
+                return;
+
+            } catch (Exception e) {
+                log.debug("Mixer {} rejected format: {}",
+                        mixerInfo.getName(),
+                        e.getMessage());
             }
-        });
-
-        audioRecorderThread.start();
-        log.info(Constants.RECORDING_STARTED);
-
-        // Wait for either timeout or silence detection
-        long startTime = System.currentTimeMillis();
-        try {
-            while (recordingActive.get() && !silenceDetected.get()) {
-                Thread.sleep(100); // Check every 100ms
-
-                // Check if we've exceeded max recording time
-                if (System.currentTimeMillis() - startTime >= Settings.MAX_RECORDING_TIME_MS) {
-                    log.info(Constants.MAX_TIME_REACHED);
-                    break;
-                }
-            }
-
-            if (silenceDetected.get()) {
-                log.info(Constants.SILENCE_DETECTED);
-            }
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.warn(Constants.RECORDING_INTERRUPTED);
-        }
-
-        // Signal recording to stop
-        recordingActive.set(false);
-        stop();
-
-        // Play only if SPY_MODE is inactive
-        if (!Settings.SPY_MODE) {
-            audioPlayer.playLeadingPing();
-            audioPlayer.play(outputFile);
         }
     }
+
+    throw new LineUnavailableException(
+            "Could not open any capture device.");
+}
+
+public void record() throws LineUnavailableException {
+    outputFile = FileUtils.generateOutputFile();
+
+    recorderLine.open(Settings.AUDIO_FORMAT);
+    recordingStream = new AudioInputStream(recorderLine);
+
+    recorderLine.start();
+
+    // Flags for controlling recording
+    AtomicBoolean recordingActive = new AtomicBoolean(true);
+    AtomicBoolean silenceDetected = new AtomicBoolean(false);
+
+    audioRecorderThread = new Thread(() -> {
+        try {
+            recordWithMonitoring(recordingStream, outputFile,
+                    Settings.SILENCE_THRESHOLD, Settings.SILENCE_DURATION_MS,
+                    silenceDetected, recordingActive);
+        } catch (IOException e) {
+            log.error(Constants.RECORDING_FAILED, e);
+            throw new RuntimeException(e);
+        }
+    });
+
+    audioRecorderThread.start();
+    log.info(Constants.RECORDING_STARTED);
+
+    long startTime = System.currentTimeMillis();
+
+    try {
+        while (recordingActive.get() && !silenceDetected.get()) {
+            Thread.sleep(100);
+
+            if (System.currentTimeMillis() - startTime >= Settings.MAX_RECORDING_TIME_MS) {
+                log.info(Constants.MAX_TIME_REACHED);
+                break;
+            }
+        }
+
+        if (silenceDetected.get()) {
+            log.info(Constants.SILENCE_DETECTED);
+        }
+
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        log.warn(Constants.RECORDING_INTERRUPTED);
+    }
+
+    recordingActive.set(false);
+    stop();
+
+    if (!Settings.SPY_MODE) {
+        audioPlayer.playLeadingPing();
+        audioPlayer.play(outputFile);
+    }
+}
 
     private void recordWithMonitoring(AudioInputStream audioStream, File outputFile,
                                       int silenceThreshold, int silenceDurationMs,

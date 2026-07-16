@@ -17,49 +17,99 @@ public class Listener extends Thread {
         this.recorder = recorder;
     }
 
-    @Override
-    public void run() {
-        AudioFormat format = Settings.AUDIO_FORMAT;
-        while (keepAlive) {
-            try {
-                DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
-                if (!AudioSystem.isLineSupported(info)) {
-                    log.error(Constants.LINE_NOT_SUPPORTED);
-                    return;
-                }
+@Override
+public void run() {
+    AudioFormat format = Settings.AUDIO_FORMAT;
 
-                line = (TargetDataLine) AudioSystem.getLine(info);
-                line.open(format);
-                line.start();
+    while (keepAlive) {
+        try {
+            line = null;
 
-                log.info(Constants.LISTENING);
+            // Find and open the first working capture device
+            outer:
+            for (Mixer.Info mixerInfo : AudioSystem.getMixerInfo()) {
 
-                byte[] buffer = new byte[4096];
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                Mixer mixer = AudioSystem.getMixer(mixerInfo);
 
-                while (running) {
-                    int bytesRead = line.read(buffer, 0, buffer.length);
-                    if (bytesRead > 0) {
-                        if (detectSound(buffer, bytesRead)) {
-                            log.info(Constants.SOUND_DETECTED);
-                            line.stop();
-                            line.close();
-                            recorder.record();
-                            break;
-                        }
+                for (Line.Info lineInfo : mixer.getTargetLineInfo()) {
+
+                    if (!TargetDataLine.class.isAssignableFrom(lineInfo.getLineClass()))
+                        continue;
+
+                    try {
+						log.info("Trying mixer: {}", mixerInfo.getName());
+						log.info("Line info: {}", lineInfo);
+                        line = (TargetDataLine) mixer.getLine(lineInfo);
+                        line.open(format);
+                        log.info("Opened line: {}", line.getLineInfo());
+
+                        log.info("Listener using mixer: {}", mixerInfo.getName());
+
+                        break outer;
+
+                    } catch (Exception ignored) {
+                        // Try the next line/mixer
                     }
                 }
+            }
 
-            } catch (LineUnavailableException e) {
-                log.error(Constants.LINE_UNAVAILABLE, e);
-            } finally {
-                if (line != null) {
+            if (line == null) {
+                log.error("No capture device available.");
+                return;
+            }
+
+            line.start();
+
+            log.info(Constants.LISTENING);
+
+            byte[] buffer = new byte[4096];
+
+            while (running) {
+               int bytesRead = line.read(buffer, 0, buffer.length);
+
+
+if (bytesRead > 0) {
+
+    int max = 0;
+
+    for (int i = 0; i < bytesRead - 1; i += 2) {
+        int sample = (short) ((buffer[i + 1] << 8) | (buffer[i] & 0xff));
+        max = Math.max(max, Math.abs(sample));
+    }
+
+
+
+    if (max > Settings.SOUND_DETECTION_SENSITIVITY) {
+        log.info(Constants.SOUND_DETECTED);
+
+        line.stop();
+        line.close();
+        line = null;
+
+        recorder.record();
+        break;
+    }
+}
+            }
+
+        } catch (LineUnavailableException e) {
+            log.error(Constants.LINE_UNAVAILABLE, e);
+
+        } finally {
+            if (line != null) {
+                try {
                     line.stop();
+                } catch (Exception ignored) {
+                }
+
+                try {
                     line.close();
+                } catch (Exception ignored) {
                 }
             }
         }
     }
+}
 
     private boolean detectSound(byte[] audioData, int length) {
         for (int i = 0; i < length - 1; i += 2) {
