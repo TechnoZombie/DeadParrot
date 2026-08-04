@@ -102,6 +102,8 @@ public class Processor {
 
             if (inputDevice != null || selectedFormat != null) {
                 audioRecorder = new AudioRecorder(inputDevice, selectedFormat);
+                listener = new Listener(audioRecorder, inputDevice, selectedFormat);
+                listener.start();
             } else {
                 audioRecorder = recorderFactory.get();
             }
@@ -110,8 +112,10 @@ public class Processor {
             throw e;
         }
 
-        listener = listenerFactory.apply(audioRecorder);
-        listener.start();
+        if (listener == null) {
+            listener = listenerFactory.apply(audioRecorder);
+            listener.start();
+        }
     }
 
     static AudioRecorder createAudioRecorder(AudioInputProvider audioInputProvider) {
