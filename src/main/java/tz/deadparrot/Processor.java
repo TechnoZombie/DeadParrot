@@ -7,7 +7,9 @@ import tz.deadparrot.utils.SoundSettingsOpener;
 import tz.deadparrot.utils.SystemUtils;
 import tz.deadparrot.utils.Printer;
 import tz.deadparrot.utils.ParrotQuotes;
+import tz.deadparrot.utils.AudioDeviceManager;
 
+import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
 import java.util.function.Function;
@@ -87,8 +89,23 @@ public class Processor {
 
     private void initializeComponents() {
         try {
-            audioRecorder = recorderFactory.get();
-        } catch (RuntimeException e) {
+            AudioDeviceManager.AudioDevice inputDevice = null;
+            if (Settings.SELECTED_INPUT_DEVICE != null) {
+                java.util.List<AudioDeviceManager.AudioDevice> devices = AudioDeviceManager.getInputDevices();
+                inputDevice = AudioDeviceManager.findDeviceByName(Settings.SELECTED_INPUT_DEVICE, devices);
+            }
+
+            AudioFormat selectedFormat = null;
+            if (Settings.SELECTED_AUDIO_FORMAT != null) {
+                selectedFormat = parseAudioFormatString(Settings.SELECTED_AUDIO_FORMAT);
+            }
+
+            if (inputDevice != null || selectedFormat != null) {
+                audioRecorder = new AudioRecorder(inputDevice, selectedFormat);
+            } else {
+                audioRecorder = recorderFactory.get();
+            }
+        } catch (LineUnavailableException e) {
             log.error(Constants.LINE_UNAVAILABLE, e);
             throw e;
         }
@@ -103,6 +120,22 @@ public class Processor {
         } catch (LineUnavailableException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private AudioFormat parseAudioFormatString(String formatString) {
+        try {
+            String[] parts = formatString.split(",");
+            if (parts.length >= 3) {
+                float sampleRate = Float.parseFloat(parts[0].trim().split(" ")[0]);
+                int sampleSizeInBits = Integer.parseInt(parts[1].trim().split("-")[0]);
+                int channels = Integer.parseInt(parts[2].trim().split(" ")[0]);
+                return new AudioFormat(sampleRate, sampleSizeInBits, channels, true, false);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to parse audio format string: " + formatString, e);
+        }
+        return null;
+    }
     }
 
 

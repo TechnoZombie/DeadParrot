@@ -1,6 +1,7 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
+import tz.deadparrot.utils.AudioDeviceManager;
 import tz.deadparrot.utils.AudioResourcesPreloader;
 
 import javax.sound.sampled.*;
@@ -14,19 +15,30 @@ public class AudioPlayer {
     private File markerFile;
     private Thread audioPlayerThread;
     private final AudioPlaybackProvider playbackProvider;
-
+    private final AudioDeviceManager.AudioDevice outputDevice;
 
     public AudioPlayer() {
-        this(AudioPlaybackProvider.SYSTEM, AudioResourcesPreloader::new);
+        this(AudioPlaybackProvider.SYSTEM, AudioResourcesPreloader::new, null);
+    }
+
+    public AudioPlayer(AudioDeviceManager.AudioDevice outputDevice) {
+        this(AudioPlaybackProvider.SYSTEM, AudioResourcesPreloader::new, outputDevice);
     }
 
     AudioPlayer(AudioPlaybackProvider playbackProvider) {
-        this(playbackProvider, AudioResourcesPreloader::new);
+        this(playbackProvider, AudioResourcesPreloader::new, null);
     }
 
     AudioPlayer(AudioPlaybackProvider playbackProvider,
                 Supplier<AudioResourcesPreloader> preloaderFactory) {
+        this(playbackProvider, preloaderFactory, null);
+    }
+
+    private AudioPlayer(AudioPlaybackProvider playbackProvider,
+                        Supplier<AudioResourcesPreloader> preloaderFactory,
+                        AudioDeviceManager.AudioDevice outputDevice) {
         this.playbackProvider = playbackProvider;
+        this.outputDevice = outputDevice;
         AudioResourcesPreloader preloader = preloaderFactory.get();
         try {
             // Only preload leadingPing if neither marker mode nor spy mode is active
@@ -50,7 +62,19 @@ public class AudioPlayer {
 
                 if (filePath.exists()) {
                     AudioInputStream audioInput = playbackProvider.getAudioInputStream(filePath);
-                    Clip clip = playbackProvider.getClip();
+                    Clip clip;
+                    if (outputDevice != null) {
+                        try {
+                            Mixer mixer = AudioSystem.getMixer(outputDevice.getMixerInfo());
+                            clip = (Clip) mixer.getLine(new DataLine.Info(Clip.class, null));
+                            log.info("Using selected output device: " + outputDevice.getName());
+                        } catch (Exception e) {
+                            log.warn("Failed to use selected output device, falling back to default: " + e.getMessage());
+                            clip = playbackProvider.getClip();
+                        }
+                    } else {
+                        clip = playbackProvider.getClip();
+                    }
                     clip.open(audioInput);
 
                     Object playbackCompletedLock = new Object();

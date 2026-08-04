@@ -2,6 +2,7 @@ package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
 import tz.deadparrot.utils.AudioLevelAnalyzer;
+import tz.deadparrot.utils.AudioDeviceManager;
 import tz.deadparrot.utils.FileUtils;
 import tz.deadparrot.utils.WaveWriterUtil;
 
@@ -11,10 +12,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 public class AudioRecorder {
-    DataLine.Info dataInfo = new DataLine.Info(TargetDataLine.class, Settings.AUDIO_FORMAT);
+    private AudioFormat selectedAudioFormat;
+    DataLine.Info dataInfo;
     TargetDataLine recorderLine;
     AudioInputStream recordingStream;
-    AudioPlayer audioPlayer = new AudioPlayer();
+    AudioPlayer audioPlayer;
     File outputFile;
     Thread audioRecorderThread;
     WaveWriterUtil waveWriterUtil = new WaveWriterUtil();
@@ -22,7 +24,48 @@ public class AudioRecorder {
     private final int maxRecordingTimeMs;
 
     public AudioRecorder() throws LineUnavailableException {
-        this(AudioInputProvider.SYSTEM);
+        this(null, null);
+    }
+
+    public AudioRecorder(AudioDeviceManager.AudioDevice inputDevice, AudioFormat audioFormat) throws LineUnavailableException {
+        this.selectedAudioFormat = audioFormat != null ? audioFormat : Settings.AUDIO_FORMAT;
+        this.silenceDurationMs = Settings.SILENCE_DURATION_MS;
+        this.maxRecordingTimeMs = Settings.MAX_RECORDING_TIME_MS;
+
+        AudioDeviceManager.AudioDevice outputDevice = null;
+        if (Settings.SELECTED_OUTPUT_DEVICE != null) {
+            java.util.List<AudioDeviceManager.AudioDevice> devices = AudioDeviceManager.getOutputDevices();
+            outputDevice = AudioDeviceManager.findDeviceByName(Settings.SELECTED_OUTPUT_DEVICE, devices);
+        }
+        this.audioPlayer = new AudioPlayer(outputDevice);
+
+        Mixer selectedMixer = null;
+        if (inputDevice != null) {
+            try {
+                selectedMixer = AudioSystem.getMixer(inputDevice.getMixerInfo());
+                log.info("Using selected input device: " + inputDevice.getName());
+            } catch (Exception e) {
+                log.warn("Failed to open selected input device, falling back to default: " + e.getMessage());
+            }
+        }
+
+        dataInfo = new DataLine.Info(TargetDataLine.class, selectedAudioFormat);
+        if (!AudioSystem.isLineSupported(dataInfo)) {
+            log.error(Constants.LINE_NOT_SUPPORTED);
+        }
+
+        try {
+            if (selectedMixer != null) {
+                recorderLine = (TargetDataLine) selectedMixer.getLine(dataInfo);
+            } else {
+                recorderLine = (TargetDataLine) AudioSystem.getLine(dataInfo);
+            }
+            recordingStream = new AudioInputStream(recorderLine);
+            log.info(Constants.LINE_IN_READY);
+        } catch (LineUnavailableException e) {
+            log.error("Failed to get recording line: " + e.getMessage());
+            throw e;
+        }
     }
 
     AudioRecorder(AudioInputProvider audioInputProvider) throws LineUnavailableException {

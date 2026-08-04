@@ -40,6 +40,18 @@ public class SettingsPersistence {
 
         properties.setProperty("easterEgg", String.valueOf(Settings.EASTER_EGG));
 
+        if (Settings.SELECTED_INPUT_DEVICE != null) {
+            properties.setProperty("selectedInputDevice", Settings.SELECTED_INPUT_DEVICE);
+        }
+
+        if (Settings.SELECTED_OUTPUT_DEVICE != null) {
+            properties.setProperty("selectedOutputDevice", Settings.SELECTED_OUTPUT_DEVICE);
+        }
+
+        if (Settings.SELECTED_AUDIO_FORMAT != null) {
+            properties.setProperty("selectedAudioFormat", Settings.SELECTED_AUDIO_FORMAT);
+        }
+
         try (FileOutputStream fos = new FileOutputStream(settingsFile.toFile())) {
 
             properties.store(fos, "DeadParrot Settings");
@@ -80,6 +92,11 @@ public class SettingsPersistence {
             Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR = Boolean.parseBoolean(properties.getProperty("saveToCustomDir", "false"));
 
             Settings.EASTER_EGG = Boolean.parseBoolean(properties.getProperty("easterEgg", "false"));
+
+            // Audio device and format settings
+            Settings.SELECTED_INPUT_DEVICE = properties.getProperty("selectedInputDevice", null);
+            Settings.SELECTED_OUTPUT_DEVICE = properties.getProperty("selectedOutputDevice", null);
+            Settings.SELECTED_AUDIO_FORMAT = properties.getProperty("selectedAudioFormat", null);
 
             log.info("Settings loaded successfully.");
 
