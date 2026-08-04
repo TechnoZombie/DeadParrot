@@ -1,6 +1,7 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
+import tz.deadparrot.utils.AudioDeviceManager;
 import tz.deadparrot.utils.AudioResourcesPreloader;
 
 import javax.sound.sampled.*;
@@ -12,9 +13,15 @@ public class AudioPlayer {
     private File leadingPing;
     private File markerFile;
     private Thread audioPlayerThread;
+    private AudioDeviceManager.AudioDevice outputDevice;
 
 
     public AudioPlayer() {
+        this(null);
+    }
+
+    public AudioPlayer(AudioDeviceManager.AudioDevice outputDevice) {
+        this.outputDevice = outputDevice;
         AudioResourcesPreloader preloader = new AudioResourcesPreloader();
         try {
             // Only preload leadingPing if neither marker mode nor spy mode is active
@@ -39,6 +46,20 @@ public class AudioPlayer {
                 if (filePath.exists()) {
                     AudioInputStream audioInput = AudioSystem.getAudioInputStream(filePath);
                     Clip clip = AudioSystem.getClip();
+
+                    if (outputDevice != null) {
+                        try {
+                            Mixer mixer = AudioSystem.getMixer(outputDevice.getMixerInfo());
+                            clip = (Clip) mixer.getLine(new DataLine.Info(Clip.class, null));
+                            log.info("Using selected output device: " + outputDevice.getName());
+                        } catch (Exception e) {
+                            log.warn("Failed to use selected output device, falling back to default: " + e.getMessage());
+                            clip = AudioSystem.getClip();
+                        }
+                    } else {
+                        clip = AudioSystem.getClip();
+                    }
+
                     clip.open(audioInput);
 
                     Object playbackCompletedLock = new Object();

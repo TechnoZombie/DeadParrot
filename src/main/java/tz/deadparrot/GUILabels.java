@@ -65,6 +65,27 @@ public class GUILabels {
     public static final String OPEN_RECORDING_SETTINGS_BUTTON_TOOLTIP = "Open System Audio Recording Settings.";
 
     /**
+     * Audio Device Selection Panel
+     */
+    public static final String AUDIO_DEVICE_PANEL_TITLE = "Audio Device Selection";
+
+    // Labels
+    public static final String INPUT_DEVICE_LABEL = "Input Device:";
+    public static final String OUTPUT_DEVICE_LABEL = "Output Device:";
+    public static final String AUDIO_FORMAT_LABEL = "Audio Format:";
+
+    // Tooltips
+    public static final String INPUT_DEVICE_TOOLTIP = "Select the audio input (recording) device to use.";
+    public static final String OUTPUT_DEVICE_TOOLTIP = "Select the audio output (playback) device to use.";
+    public static final String AUDIO_FORMAT_TOOLTIP = "Select the audio format for recording.";
+
+    // Logs
+    public static final String LOG_INPUT_DEVICE_CHANGED = "Input device changed to: ";
+    public static final String LOG_OUTPUT_DEVICE_CHANGED = "Output device changed to: ";
+    public static final String LOG_AUDIO_FORMAT_CHANGED = "Audio format changed to: ";
+    public static final String LOG_DEVICES_LOADING = "Loading available audio devices...";
+
+    /**
      *  Console Panel
      */
     public static final String CONSOLE_PANEL_TITLE = "Console Output";

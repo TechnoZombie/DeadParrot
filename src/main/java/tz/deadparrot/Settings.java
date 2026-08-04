@@ -24,6 +24,25 @@ public class Settings {
     public static final AudioFormat AUDIO_FORMAT = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
             44100, 16, 2, 4, 44100, false);
 
+    // Audio Device Selection
+    /**
+     * Selected input device (recording device) name
+     * Default: null (uses system default)
+     */
+    public static String SELECTED_INPUT_DEVICE = null;
+
+    /**
+     * Selected output device (playback device) name
+     * Default: null (uses system default)
+     */
+    public static String SELECTED_OUTPUT_DEVICE = null;
+
+    /**
+     * Selected audio format (as string representation)
+     * Default: null (uses AUDIO_FORMAT)
+     */
+    public static String SELECTED_AUDIO_FORMAT = null;
+
     // Sound Detection Settings
     /**
      * Sensitivity threshold for sound detection.

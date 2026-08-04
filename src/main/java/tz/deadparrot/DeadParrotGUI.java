@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import tz.deadparrot.utils.*;
+import javax.sound.sampled.AudioFormat;
 
 @Slf4j
 public class DeadParrotGUI extends JFrame {
@@ -31,6 +32,11 @@ public class DeadParrotGUI extends JFrame {
     private JButton saveToDesktopButton;
     private JButton chooseDirectoryButton;
     private JButton openDirectoryButton;
+
+    // Audio Device Selection
+    private JComboBox<AudioDeviceManager.AudioDevice> inputDeviceCombo;
+    private JComboBox<AudioDeviceManager.AudioDevice> outputDeviceCombo;
+    private JComboBox<String> audioFormatCombo;
 
     private Color stopButtonColor = new Color(155, 0, 20);
 
@@ -104,11 +110,12 @@ public class DeadParrotGUI extends JFrame {
         JPanel northPanel = new JPanel(new BorderLayout());
         northPanel.add(createControlPanel(), BorderLayout.NORTH);
         northPanel.add(createDirPanel(), BorderLayout.CENTER);
-        northPanel.add(createAudioControlsPanel(), BorderLayout.SOUTH);
+        northPanel.add(createAudioSelectionPanel(), BorderLayout.SOUTH);
 
         add(northPanel, BorderLayout.NORTH);
         add(createConsolePanel(), BorderLayout.CENTER);
-        add(createStatusPanel(), BorderLayout.SOUTH);
+        add(createAudioControlsPanel(), BorderLayout.SOUTH);
+        add(createStatusPanel(), BorderLayout.PAGE_END);
     }
 
     private void setupLogAppender() {
@@ -389,6 +396,173 @@ public class DeadParrotGUI extends JFrame {
         return panel;
     }
 
+    private JPanel createAudioSelectionPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(new TitledBorder(GUILabels.AUDIO_DEVICE_PANEL_TITLE));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.anchor = GridBagConstraints.WEST;
+
+        // Input Device Label and Combo
+        JLabel inputLabel = new JLabel(GUILabels.INPUT_DEVICE_LABEL);
+        inputDeviceCombo = new JComboBox<>();
+        inputDeviceCombo.setToolTipText(GUILabels.INPUT_DEVICE_TOOLTIP);
+        inputDeviceCombo.setPreferredSize(new Dimension(250, 30));
+
+        // Output Device Label and Combo
+        JLabel outputLabel = new JLabel(GUILabels.OUTPUT_DEVICE_LABEL);
+        outputDeviceCombo = new JComboBox<>();
+        outputDeviceCombo.setToolTipText(GUILabels.OUTPUT_DEVICE_TOOLTIP);
+        outputDeviceCombo.setPreferredSize(new Dimension(250, 30));
+
+        // Audio Format Label and Combo
+        JLabel formatLabel = new JLabel(GUILabels.AUDIO_FORMAT_LABEL);
+        audioFormatCombo = new JComboBox<>();
+        audioFormatCombo.setToolTipText(GUILabels.AUDIO_FORMAT_TOOLTIP);
+        audioFormatCombo.setPreferredSize(new Dimension(250, 30));
+
+        // Add listener for input device changes
+        inputDeviceCombo.addActionListener(e -> {
+            if (!updatingUI) {
+                updateSettings();
+                logToConsole(GUILabels.LOG_INPUT_DEVICE_CHANGED +
+                    (inputDeviceCombo.getSelectedItem() != null ? inputDeviceCombo.getSelectedItem().toString() : "Default"));
+                refreshAudioFormatDropdown();
+            }
+        });
+
+        // Add listener for output device changes
+        outputDeviceCombo.addActionListener(e -> {
+            if (!updatingUI) {
+                updateSettings();
+                logToConsole(GUILabels.LOG_OUTPUT_DEVICE_CHANGED +
+                    (outputDeviceCombo.getSelectedItem() != null ? outputDeviceCombo.getSelectedItem().toString() : "Default"));
+            }
+        });
+
+        // Add listener for format changes
+        audioFormatCombo.addActionListener(e -> {
+            if (!updatingUI) {
+                updateSettings();
+                logToConsole(GUILabels.LOG_AUDIO_FORMAT_CHANGED +
+                    (audioFormatCombo.getSelectedItem() != null ? audioFormatCombo.getSelectedItem().toString() : "Default"));
+            }
+        });
+
+        // Layout
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        panel.add(inputLabel, gbc);
+        gbc.gridx = 1;
+        panel.add(inputDeviceCombo, gbc);
+
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        panel.add(outputLabel, gbc);
+        gbc.gridx = 3;
+        panel.add(outputDeviceCombo, gbc);
+
+        gbc.gridx = 4;
+        gbc.gridy = 0;
+        panel.add(formatLabel, gbc);
+        gbc.gridx = 5;
+        panel.add(audioFormatCombo, gbc);
+
+        // Load devices in background
+        new Thread(() -> {
+            SwingUtilities.invokeLater(this::loadAudioDevices);
+        }, "AudioDeviceLoader").start();
+
+        return panel;
+    }
+
+    private void loadAudioDevices() {
+        logToConsole(GUILabels.LOG_DEVICES_LOADING);
+
+        updatingUI = true;
+        try {
+            // Load input devices
+            java.util.List<AudioDeviceManager.AudioDevice> inputDevices = AudioDeviceManager.getInputDevices();
+            inputDeviceCombo.removeAllItems();
+            inputDeviceCombo.addItem(new AudioDeviceManager.AudioDevice("Default", null));
+            for (AudioDeviceManager.AudioDevice device : inputDevices) {
+                inputDeviceCombo.addItem(device);
+            }
+
+            // Load output devices
+            java.util.List<AudioDeviceManager.AudioDevice> outputDevices = AudioDeviceManager.getOutputDevices();
+            outputDeviceCombo.removeAllItems();
+            outputDeviceCombo.addItem(new AudioDeviceManager.AudioDevice("Default", null));
+            for (AudioDeviceManager.AudioDevice device : outputDevices) {
+                outputDeviceCombo.addItem(device);
+            }
+
+            // Select saved devices if available
+            if (Settings.SELECTED_INPUT_DEVICE != null) {
+                for (int i = 0; i < inputDeviceCombo.getItemCount(); i++) {
+                    AudioDeviceManager.AudioDevice device = inputDeviceCombo.getItemAt(i);
+                    if (device.getName().equals(Settings.SELECTED_INPUT_DEVICE)) {
+                        inputDeviceCombo.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+
+            if (Settings.SELECTED_OUTPUT_DEVICE != null) {
+                for (int i = 0; i < outputDeviceCombo.getItemCount(); i++) {
+                    AudioDeviceManager.AudioDevice device = outputDeviceCombo.getItemAt(i);
+                    if (device.getName().equals(Settings.SELECTED_OUTPUT_DEVICE)) {
+                        outputDeviceCombo.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+
+            // Load formats for selected input device
+            refreshAudioFormatDropdown();
+        } finally {
+            updatingUI = false;
+        }
+    }
+
+    private void refreshAudioFormatDropdown() {
+        updatingUI = true;
+        try {
+            audioFormatCombo.removeAllItems();
+
+            AudioDeviceManager.AudioDevice selectedDevice = (AudioDeviceManager.AudioDevice) inputDeviceCombo.getSelectedItem();
+
+            if (selectedDevice != null && selectedDevice.getMixerInfo() != null) {
+                // Get formats for selected device
+                java.util.List<AudioFormat> formats = AudioDeviceManager.getSupportedFormatsForInputDevice(selectedDevice);
+                if (!formats.isEmpty()) {
+                    for (AudioFormat format : formats) {
+                        audioFormatCombo.addItem(AudioDeviceManager.formatToString(format));
+                    }
+                } else {
+                    audioFormatCombo.addItem("Default Format");
+                }
+            } else {
+                // Use default format
+                audioFormatCombo.addItem("Default Format");
+            }
+
+            // Select saved format if available
+            if (Settings.SELECTED_AUDIO_FORMAT != null) {
+                for (int i = 0; i < audioFormatCombo.getItemCount(); i++) {
+                    if (audioFormatCombo.getItemAt(i).equals(Settings.SELECTED_AUDIO_FORMAT)) {
+                        audioFormatCombo.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            } else if (audioFormatCombo.getItemCount() > 0) {
+                audioFormatCombo.setSelectedIndex(0);
+            }
+        } finally {
+            updatingUI = false;
+        }
+    }
+
     private JPanel createConsolePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(new TitledBorder(GUILabels.CONSOLE_PANEL_TITLE));
@@ -560,6 +734,22 @@ public class DeadParrotGUI extends JFrame {
         Settings.DARK_MODE = darkModeEnabled.isSelected();
 
         Settings.PRINT_SETTINGS = printSettingsEnabled.isSelected();
+
+        // Update audio device selections
+        if (inputDeviceCombo != null && inputDeviceCombo.getSelectedItem() != null) {
+            AudioDeviceManager.AudioDevice device = (AudioDeviceManager.AudioDevice) inputDeviceCombo.getSelectedItem();
+            Settings.SELECTED_INPUT_DEVICE = device.getMixerInfo() != null ? device.getName() : null;
+        }
+
+        if (outputDeviceCombo != null && outputDeviceCombo.getSelectedItem() != null) {
+            AudioDeviceManager.AudioDevice device = (AudioDeviceManager.AudioDevice) outputDeviceCombo.getSelectedItem();
+            Settings.SELECTED_OUTPUT_DEVICE = device.getMixerInfo() != null ? device.getName() : null;
+        }
+
+        if (audioFormatCombo != null && audioFormatCombo.getSelectedItem() != null) {
+            String formatString = (String) audioFormatCombo.getSelectedItem();
+            Settings.SELECTED_AUDIO_FORMAT = !formatString.equals("Default Format") ? formatString : null;
+        }
 
         SettingsPersistence.saveSettings();
     }
