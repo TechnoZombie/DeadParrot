@@ -23,7 +23,7 @@ public class Listener extends Thread {
     public Listener(AudioRecorder recorder, AudioDeviceManager.AudioDevice inputDevice, AudioFormat audioFormat) {
         this.recorder = recorder;
         this.inputDevice = inputDevice;
-        this.audioFormat = audioFormat != null ? audioFormat : Settings.AUDIO_FORMAT;
+        this.audioFormat = audioFormat != null ? audioFormat : Settings.DEFAULT_AUDIO_FORMAT;
     }
 
     @Override

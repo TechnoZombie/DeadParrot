@@ -29,7 +29,7 @@ public class AudioRecorder {
         if (audioFormat != null) {
             this.selectedAudioFormat = audioFormat;
         } else {
-            this.selectedAudioFormat = Settings.AUDIO_FORMAT;
+            this.selectedAudioFormat = Settings.DEFAULT_AUDIO_FORMAT;
         }
 
         // Initialize audio player with selected output device
