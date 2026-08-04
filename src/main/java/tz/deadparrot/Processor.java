@@ -83,13 +83,12 @@ public class Processor {
             }
 
             audioRecorder = new AudioRecorder(inputDevice, selectedFormat);
+            listener = new Listener(audioRecorder, inputDevice, selectedFormat);
+            listener.start();
         } catch (LineUnavailableException e) {
             log.error(Constants.LINE_UNAVAILABLE, e);
             throw new RuntimeException(e);
         }
-
-        listener = new Listener(audioRecorder);
-        listener.start();
     }
 
     private AudioFormat parseAudioFormatString(String formatString) {
