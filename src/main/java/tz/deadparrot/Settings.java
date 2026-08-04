@@ -21,7 +21,7 @@ public class Settings {
      * Standard audio format used throughout the application.
      * Default: PCM signed, 44.1kHz, 16-bit, stereo.
      */
-    public static final AudioFormat AUDIO_FORMAT = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
+    public static final AudioFormat DEFAULT_AUDIO_FORMAT = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
             44100, 16, 2, 4, 44100, false);
 
     // Audio Device Selection

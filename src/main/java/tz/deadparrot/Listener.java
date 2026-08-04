@@ -36,6 +36,7 @@ public class Listener extends Thread {
         this.audioFormat = audioFormat != null ? audioFormat : Settings.AUDIO_FORMAT;
         this.audioInputProvider = audioInputProvider;
 
+
     }
 
     @Override
