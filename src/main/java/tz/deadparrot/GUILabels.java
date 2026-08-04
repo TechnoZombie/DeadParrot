@@ -84,6 +84,7 @@ public class GUILabels {
     public static final String LOG_OUTPUT_DEVICE_CHANGED = "Output device changed to: ";
     public static final String LOG_AUDIO_FORMAT_CHANGED = "Audio format changed to: ";
     public static final String LOG_DEVICES_LOADING = "Loading available audio devices...";
+    public static final String LOG_DEVICES_LOADED = "Available audio devices loaded.";
 
     /**
      *  Console Panel

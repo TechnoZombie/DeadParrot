@@ -100,6 +100,9 @@ public class DeadParrotGUI extends JFrame {
         setLayout(new BorderLayout());
         setIconImage(new ImageIcon(getClass().getResource("/img/DeadParrotSmall.png")).getImage());
 
+        // Add menu bar
+        setJMenuBar(createMenuBar());
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -125,6 +128,52 @@ public class DeadParrotGUI extends JFrame {
 
         Logger rootLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         rootLogger.addAppender(guiLogAppender);
+    }
+
+    private JMenuBar createMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+
+        // Audio Tools Menu
+        JMenu audioToolsMenu = new JMenu("Audio Tools");
+        audioToolsMenu.setMnemonic(KeyEvent.VK_A);
+
+        JMenuItem runAudioProbeItem = new JMenuItem("Run Audio Probe");
+        runAudioProbeItem.setToolTipText(GUILabels.AUDIO_PROBE_BUTTON_TOOLTIP);
+        runAudioProbeItem.addActionListener(e -> {
+            if (isRunning) {
+                log.info(GUILabels.LOG_STOP_BEFORE_RUNNING);
+                return;
+            }
+
+            runAudioProbeItem.setEnabled(false);
+            log.info(GUILabels.LOG_AUDIO_PROBE_RUNNING);
+
+            new Thread(() -> {
+                try {
+                    AudioFormatProbe.probeAudioFormats();
+                    log.info(GUILabels.LOG_AUDIO_PROBE_COMPLETED);
+                } finally {
+                    SwingUtilities.invokeLater(() -> runAudioProbeItem.setEnabled(true));
+                }
+            }, "AudioProbeThread").start();
+        });
+
+        JMenuItem openPlaybackSettingsItem = new JMenuItem("Open Playback Settings");
+        openPlaybackSettingsItem.setToolTipText(GUILabels.OPEN_PLAYBACK_SETTINGS_BUTTON_TOOLTIP);
+        openPlaybackSettingsItem.addActionListener(e -> SoundSettingsOpener.openPlaybackSettings());
+
+        JMenuItem openRecordingSettingsItem = new JMenuItem("Open Recording Settings");
+        openRecordingSettingsItem.setToolTipText(GUILabels.OPEN_RECORDING_SETTINGS_BUTTON_TOOLTIP);
+        openRecordingSettingsItem.addActionListener(e -> SoundSettingsOpener.openRecordingSettings());
+
+        audioToolsMenu.add(runAudioProbeItem);
+        audioToolsMenu.addSeparator();
+        audioToolsMenu.add(openPlaybackSettingsItem);
+        audioToolsMenu.add(openRecordingSettingsItem);
+
+        menuBar.add(audioToolsMenu);
+
+        return menuBar;
     }
 
     private JPanel createControlPanel() {
@@ -523,6 +572,7 @@ public class DeadParrotGUI extends JFrame {
         } finally {
             updatingUI = false;
         }
+        logToConsole(GUILabels.LOG_DEVICES_LOADED);
     }
 
     private void refreshAudioFormatDropdown() {
