@@ -1,6 +1,6 @@
 # ![Diagram](https://github.com/TechnoZombie/DeadParrot/blob/main/img/DeadParrotSmall.png?raw=true) DeadParrot
 
-**DeadParrot** is a modern Java-based audio repeater designed for amateur radio enthusiasts. It listens for audio input, records the audio for a defined period or until silence is detected, and then plays back the same recording — just like a parrot!
+**DeadParrot** is a Java-based audio repeater for amateur radio enthusiasts. It detects audio, records it until silence or a maximum duration, and plays it back. The project includes a Swing GUI, settings persistence, and utilities for audio-device discovery and WAV handling.
 
 This project mimics the behavior of a repeater station by automatically handling sound detection, recording, and playback, with minimal setup. Perfect for testing transmit audio quality, channel monitoring, or silent radio surveillance.
 
@@ -19,10 +19,18 @@ This project mimics the behavior of a repeater station by automatically handling
 
 ## ⚡ Quick Start
 
+## Quick Start
+
 ### System Requirements
-- **Java 21+** – Required runtime environment
-- **Operating System** – Windows or Linux (cross-platform support)
+- **Java 21 or later** – Required runtime environment
+- **Operating System** – Windows or Linux
 - **Audio Hardware** – Microphone input and speaker output
+
+### First Run
+1. Launch the application; the GUI will appear.
+2. Select input and output devices from the dropdowns.
+3. Click **START** to begin monitoring for audio.
+4. Speak or transmit into the microphone; the application records and plays back automatically.
 
 ### Installation
 1. Clone this repository or download the latest release JAR file
@@ -38,7 +46,17 @@ This project mimics the behavior of a repeater station by automatically handling
 3. Click **START** to begin monitoring for audio
 4. Speak or transmit into your microphone – the application will record and play back automatically
 
----
+### Utility Classes
+- **`AudioDeviceManager.java`** – Discovers and manages available audio input/output devices and formats.
+- **`FileUtils.java`** – Handles directory creation, OS detection, and file operations.
+- **`AudioResourcesPreloader.java`** – Preloads audio resources from JAR to temp files.
+- **`WaveWriterUtil.java`** – Manages WAV file header writing and audio data serialization.
+- **`ParrotQuotes.java`** – Provides quotes for the shutdown Easter egg feature.
+- **`SoundSettingsOpener.java`** – Opens OS sound recording settings on Windows/Linux.
+- **`Printer.java`** – Utility for printing current settings to console.
+- **`AudioFormatProbe.java`** – Audio format detection utilities.
+- **`ListInputDevices.java`** – Lists available audio input devices.
+- **`SettingsPersistence.java`** – Persists user settings to configuration file.
 
 ## 🎯 Features
 
@@ -127,7 +145,6 @@ DeadParrot is configured via the **`Settings.java`** class with the following ma
 - Audio device selections are persistent and saved to the `deadparrot.settings` file.
 - Dropdown menus in the GUI automatically populate with available devices on your system.
 
-
 ### User Interface & Features
 - **`OPEN_OS_RECORDING_SETTINGS`** – Opens the OS sound recording settings on startup (default: `true`).
 - **`DARK_MODE`** – Enable dark theme for the GUI (default: `true`).
@@ -142,7 +159,7 @@ These settings can be modified directly in `Settings.java` or through the GUI in
 
 This project uses:
 
-- **Java 25+** – Required to build and run the project
+- **Java 21** – Core language (compiled with target version 21)
 - **Java Sound API** (`javax.sound.sampled`) – For audio input/output operations
 - **Lombok** (`@Slf4j`) – For simplified logging and reducing boilerplate code
 - **SLF4J** (v2.0.16) – Logging facade
@@ -193,7 +210,6 @@ When `USE_GUI = true` (default), a full graphical interface is available featuri
 - **Console Output** – View all logs and system messages with timestamps.
 - **Status Indicators** – Real-time status of the repeater, recorder, and listener components.
 - **Audio Controls** – Quick buttons for audio probe, playback settings, and recording settings.
-
 - **Theme Support** – Switch between dark and light modes.
 - **Emergency Close** – Safe shutdown with confirmation if the repeater is running.
 
@@ -340,5 +356,4 @@ Contributions are welcome! Please feel free to submit pull requests or open issu
 ---
 
 ## 📧 Contact & Support
-
 For issues, questions, or suggestions, please open an issue on the GitHub repository.
