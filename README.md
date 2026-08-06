@@ -1,6 +1,6 @@
 # DeadParrot
 
-DeadParrot is a small Java-based audio "parrot" (repeater) for hobby radio use. It listens for audio, records when sound is detected, and then plays the recording back. The project provides a Swing GUI, simple settings persistence and a handful of utilities for audio device discovery and WAV handling.
+DeadParrot is a Java-based audio repeater for amateur radio use. It listens for audio, records when sound is detected, and plays the recording back after sound stops or a maximum recording period is reached. The project includes a Swing GUI, settings persistence, and utilities for audio-device discovery and WAV handling.
 
 Version: 2.0.0-SNAPSHOT
 
@@ -41,6 +41,40 @@ Defaults (from Settings.java)
 - SAVE_RECORDINGS_TO_DESKTOP = true
 - PRINT_SETTINGS = true
 
+## Quick Start
+
+### System Requirements
+- Java 21 or later
+- Windows or Linux
+- Microphone input and speaker output
+
+### Installation
+1. Clone this repository or download a release JAR.
+2. Ensure Java 21 is installed: `java -version`
+3. Run the application: `java -jar deadparrot-2.0.0-SNAPSHOT.jar`
+
+### First Run
+1. Launch the application; the GUI will appear.
+2. Select input and output devices from the dropdowns.
+3. Click **START** to begin monitoring for audio.
+4. Speak or transmit into the microphone; the application records and plays back automatically.
+
+---
+
+## Features
+
+- **Sound detection** – Begins recording when sound exceeds the configured threshold.
+- **Smart recording** – Stops after silence or the maximum recording duration.
+- **WAV file output** – Saves recordings as standard WAV files.
+- **Playback support** – Plays back recordings, with a leading ping sound.
+- **Threaded design** – Handles recording and playback on separate threads.
+- **Audio device selection** – Select input/output devices and audio formats.
+- **Spy Mode** – Records transmissions without playing them back.
+- **Marker Mode** – Plays a periodic marker sound for channel monitoring.
+- **GUI** – Provides dark/light themes, console output, and configurable settings.
+- **Cross-platform support** – Supports Windows and Linux with OS detection.
+- **Flexible storage** – Configure recording location and whether recordings are kept.
+
 Build & Development
 - Requires JDK 21 and Maven
 - Build: `mvn clean package`
@@ -54,6 +88,18 @@ Dependencies (from pom.xml)
 Notes & troubleshooting
 - If you get a "Line not supported" error, use the GUI's Audio Tools → Run Audio Probe to find supported formats.
 - Check OS sound settings if no input/output devices are visible.
+
+### Utility Classes
+- **`AudioDeviceManager.java`** – Discovers and manages available audio input/output devices and formats.
+- **`FileUtils.java`** – Handles directory creation, OS detection, and file operations.
+- **`AudioResourcesPreloader.java`** – Preloads audio resources from JAR to temp files.
+- **`WaveWriterUtil.java`** – Manages WAV file header writing and audio data serialization.
+- **`ParrotQuotes.java`** – Provides quotes for the shutdown Easter egg feature.
+- **`SoundSettingsOpener.java`** – Opens OS sound recording settings on Windows/Linux.
+- **`Printer.java`** – Utility for printing current settings to console.
+- **`AudioFormatProbe.java`** – Audio format detection utilities.
+- **`ListInputDevices.java`** – Lists available audio input devices.
+- **`SettingsPersistence.java`** – Persists user settings to configuration file.
 
 Contributing
 Pull requests and issues are welcome. Keep changes focused and verify builds with `mvn package`.
@@ -84,6 +130,13 @@ DeadParrot is configured via the **`Settings.java`** class with the following ma
 - **`KEEP_RECORDINGS`** – Keep all recordings permanently (default: `true`). If `false`, recordings are deleted after playback.
 - **`SAVE_RECORDINGS_TO_DESKTOP`** – Save files to Desktop/Recordings instead of local Recordings folder (default: `true`).
 
+### Audio Device Selection (v2.0+)
+- **`SELECTED_INPUT_DEVICE`** – Name of the selected audio input device (default: system default).
+- **`SELECTED_OUTPUT_DEVICE`** – Name of the selected audio output device (default: system default).
+- **`SELECTED_AUDIO_FORMAT`** – Selected audio format as a string (default: system default).
+- Audio device selections are persistent and saved to the `deadparrot.settings` file.
+- Dropdown menus in the GUI automatically populate with available devices on your system.
+
 ### User Interface & Features
 - **`OPEN_OS_RECORDING_SETTINGS`** – Opens the OS sound recording settings on startup (default: `true`).
 - **`DARK_MODE`** – Enable dark theme for the GUI (default: `true`).
@@ -98,18 +151,13 @@ These settings can be modified directly in `Settings.java` or through the GUI in
 
 This project uses:
 
-- **Java 25+** – Required to build and run the project
+- **Java 21** – Core language (compiled with target version 21)
 - **Java Sound API** (`javax.sound.sampled`) – For audio input/output operations
 - **Lombok** (`@Slf4j`) – For simplified logging and reducing boilerplate code
-- **SLF4J** – Logging facade
-- **Logback Classic** – SLF4J implementation for advanced logging
-- **FlatLaf** – Modern look-and-feel library for Swing GUI with light/dark theme support
-- Custom utility classes:
-  - `WaveWriterUtil` – for managing WAV headers and file operations
-  - `AudioResourcesPreloader` – handles preloading/extracting audio resources
-  - `FileUtils` – cross-platform file and OS detection utilities
-  - `ParrotQuotes` – Easter egg quote generation
-  - `SoundSettingsOpener` – OS sound settings integration
+- **SLF4J** (v2.0.16) – Logging facade
+- **Logback Classic** (v1.5.13) – SLF4J implementation for advanced logging
+- **FlatLaf** (v3.5.4) – Modern look-and-feel library for Swing GUI with light/dark theme support
+- Custom utility classes for audio device management, WAV file handling, and cross-platform support
 
 ---
 
@@ -140,10 +188,13 @@ This project uses:
 ### User Interface
 
 When `USE_GUI = true` (default), a full graphical interface is available featuring:
+- **Menu Bar** – Access audio tools and system settings from the top menu bar.
 - **Start/Stop Controls** – Begin and stop the repeater operation.
+- **Audio Device Selection Panel** – Dropdown menus to choose input device, output device, and audio format.
 - **Settings Panel** – Toggle operating modes, storage options, and UI preferences in real-time.
 - **Console Output** – View all logs and system messages with timestamps.
 - **Status Indicators** – Real-time status of the repeater, recorder, and listener components.
+- **Audio Controls** – Quick buttons for audio probe, playback settings, and recording settings.
 - **Theme Support** – Switch between dark and light modes.
 - **Emergency Close** – Safe shutdown with confirmation if the repeater is running.
 
@@ -173,5 +224,80 @@ When `USE_GUI = true` (default), a full graphical interface is available featuri
    - No command-line knowledge required.
    - Toggle modes and settings on-the-fly without restarting.
 
+---
+
+## Building from Source
+
+### Prerequisites
+- Java 21 Development Kit (JDK 21)
+- Maven 3.6 or higher
+- Git (for cloning)
+
+### Build Instructions
+```bash
+git clone https://github.com/TechnoZombie/DeadParrot.git
+cd DeadParrot
+mvn clean package
+java -jar target/deadparrot-2.0.0-SNAPSHOT.jar
+```
+
+### IDE Setup
+- **IntelliJ IDEA / JetBrains IDEs:** Open as a Maven project.
+- **Eclipse:** Import as a Maven project.
+- **VS Code:** Install the Java Extension Pack and Maven for Java extensions.
+
+---
+
+## Configuration Files
+
+### deadparrot.settings
+A properties file that stores user preferences, including audio device selections, operating mode, storage preferences, and UI theme. It is located in the application's working directory.
+
+Example content:
+```properties
+selectedInputDevice=Microphone (Conexant SmartAudio HD)
+selectedOutputDevice=Speakers (Conexant SmartAudio HD)
+selectedAudioFormat=44100 Hz, 16-bit, 2 ch
+darkMode=true
+keepRecordings=true
+spyMode=false
+markerMode=false
+```
+
+---
+
+## Troubleshooting
+
+### "Line not supported" error
+The selected audio format may not be supported by the device. Use **Audio Tools → Run Audio Probe** to find compatible formats, or choose another format supported by both devices.
+
+### No audio input detected
+Check system audio settings, verify the microphone is connected and enabled, and adjust `SOUND_DETECTION_SENSITIVITY` in Settings if needed.
+
+### Playback not working
+Check the selected output device and system volume, and test the speaker in system settings.
+
+### Application won't start
+Verify Java 21 is installed, review console logs, and ensure the application directory is writable.
+
+---
+
+## Version History
+
+### v2.0.0
+- Added audio device selection and support for multiple audio formats.
+- Added menu bar integration for audio tools.
+- Improved device compatibility and persistence of audio device selections.
+
+### v1.x
+- Initial release with core repeater functionality, GUI themes, Spy Mode, Marker Mode, and the Easter egg feature.
+
+---
+
 ## License
 See the LICENSE file in this repository.
+
+---
+
+## Contact & Support
+For issues, questions, or suggestions, please open an issue on the GitHub repository.
