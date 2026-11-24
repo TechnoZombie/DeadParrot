@@ -93,6 +93,7 @@ are tested using simulated devices and injectable process launchers. Swing
 integration tests exercise the UI in a graphical environment without requiring
 real audio hardware. The JaCoCo report is generated at `target/site/jacoco/index.html`.
 
+```
 ---
 
 ## 🔧 Configuration
@@ -126,6 +127,7 @@ DeadParrot is configured via the **`Settings.java`** class with the following ma
 - Audio device selections are persistent and saved to the `deadparrot.settings` file.
 - Dropdown menus in the GUI automatically populate with available devices on your system.
 
+
 ### User Interface & Features
 - **`OPEN_OS_RECORDING_SETTINGS`** – Opens the OS sound recording settings on startup (default: `true`).
 - **`DARK_MODE`** – Enable dark theme for the GUI (default: `true`).
@@ -146,7 +148,14 @@ This project uses:
 - **SLF4J** (v2.0.16) – Logging facade
 - **Logback Classic** (v1.5.13) – SLF4J implementation for advanced logging
 - **FlatLaf** (v3.5.4) – Modern look-and-feel library for Swing GUI with light/dark theme support
-- Custom utility classes for audio device management, WAV file handling, and cross-platform support
+- Custom utility classes:
+  - `AudioDeviceManager` – audio device and format management
+  - `WaveWriterUtil` – manages WAV headers and file operations
+  - `AudioResourcesPreloader` – handles preloading/extracting audio resources
+  - `FileUtils` – cross-platform file and OS detection utilities
+  - `ParrotQuotes` – Easter egg quote generation
+  - `SoundSettingsOpener` – OS sound settings integration
+
 
 ---
 
@@ -184,6 +193,7 @@ When `USE_GUI = true` (default), a full graphical interface is available featuri
 - **Console Output** – View all logs and system messages with timestamps.
 - **Status Indicators** – Real-time status of the repeater, recorder, and listener components.
 - **Audio Controls** – Quick buttons for audio probe, playback settings, and recording settings.
+
 - **Theme Support** – Switch between dark and light modes.
 - **Emergency Close** – Safe shutdown with confirmation if the repeater is running.
 
@@ -269,7 +279,7 @@ markerMode=false
 
 ### Issue: "Line not supported" Error
 **Cause:** The selected audio format is not supported by your device.
-**Solution:** 
+**Solution:**
 - Use the Audio Probe tool (Menu > Audio Tools > Run Audio Probe) to find compatible formats
 - Select a different audio format from the dropdown
 - Ensure both input and output devices support your selected format
