@@ -79,11 +79,11 @@ public class SettingsPersistence {
 
             Settings.MARKER_MODE = Boolean.parseBoolean(properties.getProperty("markerMode", "false"));
 
-            Settings.KEEP_RECORDINGS = Boolean.parseBoolean(properties.getProperty("keepRecordings", "true"));
+            Settings.KEEP_RECORDINGS = Boolean.parseBoolean(properties.getProperty("keepRecordings", "false"));
 
             Settings.PRINT_SETTINGS = Boolean.parseBoolean(properties.getProperty("printSettings", "false"));
 
-            Settings.DARK_MODE = Boolean.parseBoolean(properties.getProperty("darkMode", "true"));
+            Settings.DARK_MODE = Boolean.parseBoolean(properties.getProperty("darkMode", "false"));
 
             Settings.OPEN_OS_RECORDING_SETTINGS = Boolean.parseBoolean(properties.getProperty("openOSRecordingSettings", "false"));
 
@@ -92,11 +92,6 @@ public class SettingsPersistence {
             Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR = Boolean.parseBoolean(properties.getProperty("saveToCustomDir", "false"));
 
             Settings.EASTER_EGG = Boolean.parseBoolean(properties.getProperty("easterEgg", "false"));
-
-            // Audio device and format settings
-            Settings.SELECTED_INPUT_DEVICE = properties.getProperty("selectedInputDevice", null);
-            Settings.SELECTED_OUTPUT_DEVICE = properties.getProperty("selectedOutputDevice", null);
-            Settings.SELECTED_AUDIO_FORMAT = properties.getProperty("selectedAudioFormat", null);
 
             log.info("Settings loaded successfully.");
 

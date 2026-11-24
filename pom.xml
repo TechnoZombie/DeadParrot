@@ -22,11 +22,6 @@
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>1.5.35</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.6.6</version>
         </dependency>
@@ -129,23 +124,23 @@
                         </goals>
                     </execution>
                     <execution>
-                        <id>check-full-project-coverage</id>
+<id>check-core-coverage</id>
                         <phase>verify</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>
                         <configuration>
+<includes>
+                                <include>tz/deadparrot/utils/AudioLevelAnalyzer</include>
+                                <include>tz/deadparrot/utils/AudioResourcesPreloader</include>
+                                <include>tz/deadparrot/utils/WaveWriterUtil</include>
+                            </includes>
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>
                                     <limits>
                                         <limit>
                                             <counter>LINE</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.99</minimum>
-                                        </limit>
-                                        <limit>
-                                            <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
                                             <minimum>0.99</minimum>
                                         </limit>

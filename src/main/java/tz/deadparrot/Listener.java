@@ -35,12 +35,11 @@ public class Listener extends Thread {
         this.inputDevice = inputDevice;
         this.audioFormat = audioFormat != null ? audioFormat : Settings.AUDIO_FORMAT;
         this.audioInputProvider = audioInputProvider;
-
-
     }
 
     @Override
     public void run() {
+        AudioFormat format = Settings.AUDIO_FORMAT;
         while (keepAlive) {
             try {
                 DataLine.Info info = new DataLine.Info(TargetDataLine.class, audioFormat);
@@ -92,33 +91,6 @@ public class Listener extends Thread {
                 }
             }
         }
-    }
-
-    private boolean detectSound(byte[] audioData, int length) {
-        // Handle different sample sizes
-        if (audioFormat.getSampleSizeInBits() == 16) {
-            // 16-bit audio
-            for (int i = 0; i < length - 1; i += 2) {
-                int sample;
-                if (audioFormat.isBigEndian()) {
-                    sample = (audioData[i] << 8) | (audioData[i + 1] & 0xff);
-                } else {
-                    sample = (audioData[i + 1] << 8) | (audioData[i] & 0xff);
-                }
-                if (Math.abs(sample) > Settings.SOUND_DETECTION_SENSITIVITY) {
-                    return true;
-                }
-            }
-        } else if (audioFormat.getSampleSizeInBits() == 8) {
-            // 8-bit audio
-            for (int i = 0; i < length; i++) {
-                int sample = audioData[i] & 0xff;
-                if (Math.abs(sample - 128) > Settings.SOUND_DETECTION_SENSITIVITY) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     public void shutdown() {

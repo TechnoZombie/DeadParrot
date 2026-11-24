@@ -1,7 +1,6 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
-import tz.deadparrot.utils.AudioDeviceManager;
 import tz.deadparrot.utils.AudioResourcesPreloader;
 
 import javax.sound.sampled.*;

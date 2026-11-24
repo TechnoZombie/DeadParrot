@@ -7,9 +7,7 @@ import tz.deadparrot.utils.SoundSettingsOpener;
 import tz.deadparrot.utils.SystemUtils;
 import tz.deadparrot.utils.Printer;
 import tz.deadparrot.utils.ParrotQuotes;
-import tz.deadparrot.utils.AudioDeviceManager;
 
-import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
 import java.util.function.Function;
@@ -109,6 +107,12 @@ public class Processor {
             }
         } catch (LineUnavailableException e) {
             log.error(Constants.LINE_UNAVAILABLE, e);
+            throw new RuntimeException(e);
+        } catch (RuntimeException e) {
+            log.error(Constants.LINE_UNAVAILABLE, e);
+            throw e;
+        }
+            log.error(Constants.LINE_UNAVAILABLE, e);
             throw e;
         }
 
@@ -140,8 +144,6 @@ public class Processor {
         }
         return null;
     }
-    }
-
 
     private void setupShutdownHook() {
         shutdownHook = new Thread(this::shutdown);

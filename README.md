@@ -40,23 +40,58 @@ This project mimics the behavior of a repeater station by automatically handling
    java -jar deadparrot-2.0.0-SNAPSHOT.jar
    ```
 
-### First Run
-1. Launch the application – the GUI will appear
-2. Select your **Input Device** and **Output Device** from the dropdowns
-3. Click **START** to begin monitoring for audio
-4. Speak or transmit into your microphone – the application will record and play back automatically
+## 🎯 Features
+
+- 🎙️ **Sound Detection** – Begins recording only when sound is detected via threshold analysis.
+- ⏺️ **Smart Recording** – Automatically stops recording after a period of silence or a max duration.
+- 📁 **WAV File Output** – Saves recordings as standard `.wav` files with flexible output paths.
+- 🔊 **Playback Support** – Plays back the recorded audio after a short leading "ping" sound.
+- 🧠 **Threaded Design** – Handles recording and playback on separate threads to ensure responsive performance.
+- 🕵️ **Spy Mode** – A silent monitoring mode that records transmissions without playing them back.
+- 🎯 **Marker Mode** – Plays a periodic marker sound (configurable interval) for channel monitoring.
+- 🖥️ **Modern GUI** – Full graphical interface with FlatLaf support, featuring dark/light themes, real-time console output, and configurable settings.
+- 🌙 **Dark & Light Mode** – Toggle between dark and light UI themes.
+- 🖴 **Cross-Platform Support** – Runs on Windows and Linux with automatic OS detection.
+- 🎁 **Easter Egg** – Monty Python-style parrot quotes on shutdown for fun!
+- 📂 **Flexible Storage** – Save recordings locally or to desktop folder, with options to keep or delete after playback.
+
+---
+
+## 🛠️ Project Structure
+
+### Core Components
+- **`Main.java`** – Application entry point; launches either the GUI or console-based processor based on settings.
+- **`DeadParrotGUI.java`** – Full-featured graphical user interface with Swing/FlatLaf framework.
+- **`Processor.java`** – Main coordinator that initializes components and manages the application lifecycle.
+- **`AudioRecorder.java`** – Manages microphone input, records sound, detects silence, and writes to a WAV file.
+- **`AudioPlayer.java`** – Plays the recorded audio, leading ping sound, and marker sounds.
+- **`Listener.java`** – Constantly monitors for sound to trigger the recording process.
+- **`AudioMarker.java`** – Handles marker mode operation with periodic marker playback.
+- **`Settings.java`** – Centralized configuration management for all application settings.
+- **`Constants.java`** – Central repository for constant strings and system messages.
 
 ### Utility Classes
-- **`AudioDeviceManager.java`** – Discovers and manages available audio input/output devices and formats.
 - **`FileUtils.java`** – Handles directory creation, OS detection, and file operations.
 - **`AudioResourcesPreloader.java`** – Preloads audio resources from JAR to temp files.
 - **`WaveWriterUtil.java`** – Manages WAV file header writing and audio data serialization.
-- **`ParrotQuotes.java`** – Provides quotes for the shutdown Easter egg feature.
+- **`ParrotQuotes.java`** – Provides Monty Python-style parrot quotes for the Easter egg feature.
 - **`SoundSettingsOpener.java`** – Opens OS sound recording settings on Windows/Linux.
 - **`Printer.java`** – Utility for printing current settings to console.
 - **`AudioFormatProbe.java`** – Audio format detection utilities.
 - **`ListInputDevices.java`** – Lists available audio input devices.
-- **`SettingsPersistence.java`** – Persists user settings to configuration file.
+- **`AudioLevelAnalyzer.java`** – Pure audio-sample analysis used by the listener and recorder.
+
+## 🧪 Tests
+
+Run the test suite with `mvn test`. To enforce the core-logic coverage target, run
+`mvn verify`; JaCoCo requires at least 99% line coverage across
+`AudioLevelAnalyzer`, `AudioResourcesPreloader`, and `WaveWriterUtil`. A full coverage report is generated at
+`target/site/jacoco/index.html`.
+
+The coverage gate focuses on deterministic logic that can be tested without audio
+devices, an operating-system desktop, or a graphical display. The report still
+includes the rest of the application, whose hardware and UI integration requires
+separate environment-dependent tests.
 
 ## 🎯 Features
 
@@ -138,13 +173,6 @@ DeadParrot is configured via the **`Settings.java`** class with the following ma
 - **`KEEP_RECORDINGS`** – Keep all recordings permanently (default: `true`). If `false`, recordings are deleted after playback.
 - **`SAVE_RECORDINGS_TO_DESKTOP`** – Save files to Desktop/Recordings instead of local Recordings folder (default: `true`).
 
-### Audio Device Selection (v2.0+)
-- **`SELECTED_INPUT_DEVICE`** – Name of the selected audio input device (default: system default).
-- **`SELECTED_OUTPUT_DEVICE`** – Name of the selected audio output device (default: system default).
-- **`SELECTED_AUDIO_FORMAT`** – Selected audio format as a string (default: system default).
-- Audio device selections are persistent and saved to the `deadparrot.settings` file.
-- Dropdown menus in the GUI automatically populate with available devices on your system.
-
 ### User Interface & Features
 - **`OPEN_OS_RECORDING_SETTINGS`** – Opens the OS sound recording settings on startup (default: `true`).
 - **`DARK_MODE`** – Enable dark theme for the GUI (default: `true`).
@@ -172,7 +200,6 @@ This project uses:
   - `FileUtils` – cross-platform file and OS detection utilities
   - `ParrotQuotes` – Easter egg quote generation
   - `SoundSettingsOpener` – OS sound settings integration
-
 
 ---
 
@@ -203,13 +230,10 @@ This project uses:
 ### User Interface
 
 When `USE_GUI = true` (default), a full graphical interface is available featuring:
-- **Menu Bar** – Access audio tools and system settings from the top menu bar.
 - **Start/Stop Controls** – Begin and stop the repeater operation.
-- **Audio Device Selection Panel** – Dropdown menus to choose input device, output device, and audio format.
 - **Settings Panel** – Toggle operating modes, storage options, and UI preferences in real-time.
 - **Console Output** – View all logs and system messages with timestamps.
 - **Status Indicators** – Real-time status of the repeater, recorder, and listener components.
-- **Audio Controls** – Quick buttons for audio probe, playback settings, and recording settings.
 - **Theme Support** – Switch between dark and light modes.
 - **Emergency Close** – Safe shutdown with confirmation if the repeater is running.
 

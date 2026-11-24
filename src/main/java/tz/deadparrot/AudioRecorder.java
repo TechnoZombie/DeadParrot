@@ -12,11 +12,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 public class AudioRecorder {
-    private AudioFormat selectedAudioFormat;
-    DataLine.Info dataInfo;
+    DataLine.Info dataInfo = new DataLine.Info(TargetDataLine.class, Settings.AUDIO_FORMAT);
     TargetDataLine recorderLine;
     AudioInputStream recordingStream;
-    AudioPlayer audioPlayer;
+    AudioPlayer audioPlayer = new AudioPlayer();
     File outputFile;
     Thread audioRecorderThread;
     WaveWriterUtil waveWriterUtil = new WaveWriterUtil();
@@ -24,10 +23,20 @@ public class AudioRecorder {
     private final int maxRecordingTimeMs;
 
     public AudioRecorder() throws LineUnavailableException {
-        this(null, null);
+        this(AudioInputProvider.SYSTEM);
     }
 
     public AudioRecorder(AudioDeviceManager.AudioDevice inputDevice, AudioFormat audioFormat) throws LineUnavailableException {
+        this(AudioInputProvider.SYSTEM, inputDevice, audioFormat);
+    }
+
+    AudioRecorder(AudioInputProvider audioInputProvider) throws LineUnavailableException {
+        this(audioInputProvider, null, null);
+    }
+
+    private AudioRecorder(AudioInputProvider audioInputProvider,
+                          AudioDeviceManager.AudioDevice inputDevice,
+                          AudioFormat audioFormat) throws LineUnavailableException {
         this.selectedAudioFormat = audioFormat != null ? audioFormat : Settings.AUDIO_FORMAT;
         this.silenceDurationMs = Settings.SILENCE_DURATION_MS;
         this.maxRecordingTimeMs = Settings.MAX_RECORDING_TIME_MS;
@@ -50,22 +59,13 @@ public class AudioRecorder {
         }
 
         dataInfo = new DataLine.Info(TargetDataLine.class, selectedAudioFormat);
-        if (!AudioSystem.isLineSupported(dataInfo)) {
+        if (!audioInputProvider.isLineSupported(dataInfo)) {
             log.error(Constants.LINE_NOT_SUPPORTED);
         }
 
-        try {
-            if (selectedMixer != null) {
-                recorderLine = (TargetDataLine) selectedMixer.getLine(dataInfo);
-            } else {
-                recorderLine = (TargetDataLine) AudioSystem.getLine(dataInfo);
-            }
-            recordingStream = new AudioInputStream(recorderLine);
-            log.info(Constants.LINE_IN_READY);
-        } catch (LineUnavailableException e) {
-            log.error("Failed to get recording line: " + e.getMessage());
-            throw e;
-        }
+        recorderLine = audioInputProvider.getLine(dataInfo);
+        recordingStream = new AudioInputStream(recorderLine);
+        log.info(Constants.LINE_IN_READY);
     }
 
     AudioRecorder(AudioInputProvider audioInputProvider) throws LineUnavailableException {
