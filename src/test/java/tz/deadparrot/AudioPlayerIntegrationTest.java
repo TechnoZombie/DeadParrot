@@ -115,6 +115,25 @@ class AudioPlayerIntegrationTest {
     }
 
     @Test
+    void constructsPlayerWithTheSystemProviderWithoutOpeningAudioDevices() {
+        Settings.SPY_MODE = true;
+        Settings.MARKER_MODE = false;
+
+        assertNotNull(new AudioPlayer());
+    }
+
+    @Test
+    void cleanupWithoutPlaybackOrExistingMarkerIsSafe() throws Exception {
+        Settings.SPY_MODE = true;
+        Settings.MARKER_MODE = false;
+        AudioPlayer player = new AudioPlayer(provider());
+        player.stopAndDelete();
+        setField(player, "markerFile", tempDir.resolve("missing-marker.wav").toFile());
+
+        player.stopAndDelete();
+    }
+
+    @Test
     void preservesInterruptStatusWhenPlaybackJoinIsInterrupted() throws Exception {
         Settings.SPY_MODE = true;
         Settings.MARKER_MODE = false;
@@ -149,6 +168,137 @@ class AudioPlayerIntegrationTest {
 
         assertTrue(playbackStarted.await(2, TimeUnit.SECONDS));
         playerThread(player).join(2000);
+        assertFalse(playerThread(player).isAlive());
+    }
+
+    @Test
+    void stopAndDeleteWaitsForPlaybackAndPreservesInterruptStatus() throws Exception {
+        Settings.SPY_MODE = true;
+        Settings.MARKER_MODE = false;
+        CountDownLatch streamRequested = new CountDownLatch(1);
+        CountDownLatch allowPlaybackToFail = new CountDownLatch(1);
+        AudioPlayer player = new AudioPlayer(new AudioPlaybackProvider() {
+            @Override
+            public AudioInputStream getAudioInputStream(File file) {
+                streamRequested.countDown();
+                try {
+                    allowPlaybackToFail.await();
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                }
+                throw new IllegalStateException("simulated playback completion");
+            }
+
+            @Override
+            public Clip getClip() {
+                throw new AssertionError("clip should not be requested");
+            }
+        });
+        Path recording = Files.createFile(tempDir.resolve("recording.wav"));
+        Path markerDirectory = Files.createDirectory(tempDir.resolve("marker"));
+        Path child = Files.createFile(markerDirectory.resolve("in-use.wav"));
+        setField(player, "markerFile", markerDirectory.toFile());
+        Thread playCaller = new Thread(() -> player.play(recording.toFile()));
+        playCaller.start();
+        assertTrue(streamRequested.await(2, TimeUnit.SECONDS));
+
+        Thread.currentThread().interrupt();
+        try {
+            player.stopAndDelete();
+            assertTrue(Thread.currentThread().isInterrupted());
+        } finally {
+            Thread.interrupted();
+            allowPlaybackToFail.countDown();
+        }
+
+        playCaller.join(2000);
+        playerThread(player).join(2000);
+        assertFalse(playCaller.isAlive());
+        assertTrue(Files.exists(markerDirectory));
+        Files.deleteIfExists(child);
+        Files.deleteIfExists(markerDirectory);
+    }
+
+    @Test
+    void waitsForActivePlaybackBeforeDeletingMarker() throws Exception {
+        Settings.SPY_MODE = true;
+        Settings.MARKER_MODE = false;
+        CountDownLatch streamRequested = new CountDownLatch(1);
+        CountDownLatch allowPlaybackToFail = new CountDownLatch(1);
+        AudioPlayer player = new AudioPlayer(new AudioPlaybackProvider() {
+            @Override
+            public AudioInputStream getAudioInputStream(File file) {
+                streamRequested.countDown();
+                try {
+                    allowPlaybackToFail.await();
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                }
+                throw new IllegalStateException("simulated playback completion");
+            }
+
+            @Override public Clip getClip() { throw new AssertionError("clip should not be requested"); }
+        });
+        Path recording = Files.createFile(tempDir.resolve("recording-wait.wav"));
+        Path marker = Files.createFile(tempDir.resolve("marker-wait.wav"));
+        setField(player, "markerFile", marker.toFile());
+        Thread playCaller = new Thread(() -> player.play(recording.toFile()));
+        playCaller.start();
+        assertTrue(streamRequested.await(2, TimeUnit.SECONDS));
+
+        Thread cleanup = new Thread(player::stopAndDelete);
+        cleanup.start();
+        Thread.sleep(20);
+        assertTrue(cleanup.isAlive());
+        allowPlaybackToFail.countDown();
+        cleanup.join(2000);
+        playCaller.join(2000);
+
+        assertFalse(cleanup.isAlive());
+        assertFalse(playCaller.isAlive());
+        assertFalse(Files.exists(marker));
+    }
+
+    @Test
+    void ignoresNonStopClipEventsBeforePlaybackCompletes() throws Exception {
+        Settings.SPY_MODE = true;
+        Settings.MARKER_MODE = false;
+        AtomicReference<LineListener> listenerRef = new AtomicReference<>();
+        AudioPlayer player = new AudioPlayer(new AudioPlaybackProvider() {
+            @Override
+            public AudioInputStream getAudioInputStream(File file) {
+                return new AudioInputStream(new ByteArrayInputStream(new byte[0]),
+                        new AudioFormat(8000, 16, 1, true, false), 0);
+            }
+
+            @Override
+            public Clip getClip() {
+                return (Clip) Proxy.newProxyInstance(Clip.class.getClassLoader(),
+                        new Class<?>[]{Clip.class}, (proxy, method, args) -> {
+                            if (method.getName().equals("addLineListener")) {
+                                listenerRef.set((LineListener) args[0]);
+                            } else if (method.getName().equals("start")) {
+                                new Thread(() -> {
+                                    try {
+                                        Thread.sleep(10);
+                                    } catch (InterruptedException exception) {
+                                        Thread.currentThread().interrupt();
+                                        return;
+                                    }
+                                    listenerRef.get().update(new LineEvent((Line) proxy,
+                                            LineEvent.Type.OPEN, 0));
+                                    listenerRef.get().update(new LineEvent((Line) proxy,
+                                            LineEvent.Type.STOP, 0));
+                                }).start();
+                            }
+                            return null;
+                        });
+            }
+        });
+        Path recording = Files.createFile(tempDir.resolve("events.wav"));
+
+        player.play(recording.toFile());
+
         assertFalse(playerThread(player).isAlive());
     }
 
@@ -212,5 +362,12 @@ class AudioPlayerIntegrationTest {
         Field field = AudioPlayer.class.getDeclaredField("audioPlayerThread");
         field.setAccessible(true);
         return (Thread) field.get(player);
+    }
+
+    private void setField(AudioPlayer player, String name, Object value)
+            throws ReflectiveOperationException {
+        Field field = AudioPlayer.class.getDeclaredField(name);
+        field.setAccessible(true);
+        field.set(player, value);
     }
 }

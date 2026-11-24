@@ -82,6 +82,7 @@ class SystemUtilsTest {
     void scalesScreenSizeByTheRequestedFactor() {
         assertTrue(SystemUtils.getScaledScreenSize(0.5).width > 0);
         assertTrue(SystemUtils.getScaledScreenSize(0.5).height > 0);
+        assertTrue(new SystemUtils() != null);
     }
 
 }

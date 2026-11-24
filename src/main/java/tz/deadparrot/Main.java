@@ -3,6 +3,7 @@ package tz.deadparrot;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 /**
  * DeadParrot Ham Radio Repeater
@@ -15,8 +16,9 @@ import javax.swing.*;
 public class Main {
     static Runnable guiLauncher =
             () -> SwingUtilities.invokeLater(() -> new DeadParrotGUI().setVisible(true));
+    static Supplier<Processor> processorFactory = Processor::new;
     static Runnable processorLauncher = () -> {
-        Processor processor = new Processor();
+        Processor processor = processorFactory.get();
         processor.init();
     };
 

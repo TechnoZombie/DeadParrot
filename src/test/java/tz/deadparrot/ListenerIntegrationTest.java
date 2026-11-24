@@ -8,6 +8,8 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.TargetDataLine;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -42,12 +44,46 @@ class ListenerIntegrationTest {
     }
 
     @Test
+    void ignoresPositiveAudioBelowTheDetectionThreshold() throws Exception {
+        FakeTargetDataLine line = new FakeTargetDataLine(
+                Settings.AUDIO_FORMAT, new byte[]{0, 1, 0, 1});
+        CountDownLatch lineOpened = new CountDownLatch(1);
+        AtomicBoolean recorded = new AtomicBoolean();
+        AudioInputProvider input = new AudioInputProvider() {
+            @Override public boolean isLineSupported(DataLine.Info lineInfo) { return true; }
+            @Override public TargetDataLine getLine(DataLine.Info lineInfo) {
+                lineOpened.countDown();
+                return line;
+            }
+        };
+        Listener listener = new Listener(new RecordingStub(() -> recorded.set(true)), input);
+        Thread listenerThread = new Thread(listener);
+        listenerThread.start();
+
+        assertTrue(lineOpened.await(2, TimeUnit.SECONDS));
+        Thread.sleep(20);
+        listener.shutdown();
+        listenerThread.join(2000);
+
+        assertFalse(listenerThread.isAlive());
+        assertFalse(recorded.get());
+    }
+
+    @Test
     void exitsWhenDeviceDoesNotSupportTheRequestedAudioFormat() throws Exception {
         Listener listener = new Listener(new RecordingStub(() -> {
             throw new AssertionError("unsupported input must not record");
         }), provider(null, false));
 
         listener.run();
+    }
+
+    @Test
+    void constructsListenerWithTheSystemInputProviderWithoutOpeningHardware() throws Exception {
+        AudioRecorder recorder = new RecordingStub(() -> { });
+        Listener listener = new Listener(recorder);
+
+        assertFalse(listener.isAlive());
     }
 
     @Test

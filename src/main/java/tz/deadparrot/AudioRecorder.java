@@ -18,12 +18,21 @@ public class AudioRecorder {
     File outputFile;
     Thread audioRecorderThread;
     WaveWriterUtil waveWriterUtil = new WaveWriterUtil();
+    private final int silenceDurationMs;
+    private final int maxRecordingTimeMs;
 
     public AudioRecorder() throws LineUnavailableException {
         this(AudioInputProvider.SYSTEM);
     }
 
     AudioRecorder(AudioInputProvider audioInputProvider) throws LineUnavailableException {
+        this(audioInputProvider, Settings.SILENCE_DURATION_MS, Settings.MAX_RECORDING_TIME_MS);
+    }
+
+    AudioRecorder(AudioInputProvider audioInputProvider, int silenceDurationMs,
+                  int maxRecordingTimeMs) throws LineUnavailableException {
+        this.silenceDurationMs = silenceDurationMs;
+        this.maxRecordingTimeMs = maxRecordingTimeMs;
         if (!audioInputProvider.isLineSupported(dataInfo)) {
             log.error(Constants.LINE_NOT_SUPPORTED);
         }
@@ -45,7 +54,7 @@ public class AudioRecorder {
         audioRecorderThread = new Thread(() -> {
             try {
                 recordWithMonitoring(recordingStream, outputFile,
-                        Settings.SILENCE_THRESHOLD, Settings.SILENCE_DURATION_MS,
+                        Settings.SILENCE_THRESHOLD, silenceDurationMs,
                         silenceDetected, recordingActive);
             } catch (IOException e) {
                 log.error(Constants.RECORDING_FAILED, e);
@@ -63,7 +72,7 @@ public class AudioRecorder {
                 Thread.sleep(100); // Check every 100ms
 
                 // Check if we've exceeded max recording time
-                if (System.currentTimeMillis() - startTime >= Settings.MAX_RECORDING_TIME_MS) {
+                if (System.currentTimeMillis() - startTime >= maxRecordingTimeMs) {
                     log.info(Constants.MAX_TIME_REACHED);
                     break;
                 }

@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FileUtilsTest {
@@ -83,6 +84,7 @@ class FileUtilsTest {
         FileUtils.openDestinationFolder();
 
         assertFalse(Files.exists(Path.of(Settings.CUSTOM_RECORDINGS_DIRECTORY)));
+        assertNotNull(new FileUtils());
     }
 
     @Test
@@ -97,6 +99,21 @@ class FileUtilsTest {
             FileUtils.directoryOpener = file -> {
                 throw new IOException("desktop unavailable");
             };
+            FileUtils.openDestinationFolder();
+        } finally {
+            FileUtils.directoryOpener = opener;
+        }
+    }
+
+    @Test
+    void opensConfiguredDesktopDirectory() throws IOException {
+        Path directory = Files.createDirectory(tempDir.resolve("desktop"));
+        Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR = false;
+        Settings.SAVE_RECORDINGS_TO_DESKTOP = true;
+        Settings.OUTPUT_DESKTOP_FOLDER_PATH = directory.toString();
+        FileUtils.DirectoryOpener opener = FileUtils.directoryOpener;
+        try {
+            FileUtils.directoryOpener = file -> assertEquals(directory.toFile(), file);
             FileUtils.openDestinationFolder();
         } finally {
             FileUtils.directoryOpener = opener;

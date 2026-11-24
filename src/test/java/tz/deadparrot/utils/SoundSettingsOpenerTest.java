@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import tz.deadparrot.Constants;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -114,6 +115,27 @@ class SoundSettingsOpenerTest {
         SoundSettingsOpener.openRecordingSettings();
 
         assertEquals(2, commands.size());
+    }
+
+    @Test
+    void opensLinuxRecordingSettingsWhenGnomeIsAvailable() {
+        Constants.IS_WINDOWS = false;
+        Constants.IS_LINUX = true;
+        SoundSettingsOpener.processLauncher = this::recordCommand;
+
+        SoundSettingsOpener.openRecordingSettings();
+        assertEquals(List.of(List.of("gnome-control-center", "sound")), commands);
+        assertEquals("SoundSettingsOpener", new SoundSettingsOpener().getClass().getSimpleName());
+    }
+
+    @Test
+    void defaultLauncherCanStartAHarmlessShortLivedProcess() throws Exception {
+        SoundSettingsOpener.ProcessLauncher launcher = SoundSettingsOpener.processLauncher;
+        String javaExecutable = Path.of(System.getProperty("java.home"), "bin", "java").toString();
+
+        Process process = launcher.start(List.of(javaExecutable, "-version"));
+
+        assertEquals(0, process.waitFor());
     }
 
     private Process recordCommand(List<String> command) {

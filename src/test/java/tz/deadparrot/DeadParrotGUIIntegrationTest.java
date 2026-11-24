@@ -13,6 +13,8 @@ import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
+import javax.swing.LookAndFeel;
+import javax.swing.UIManager;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.WindowEvent;
@@ -99,6 +101,45 @@ class DeadParrotGUIIntegrationTest {
         Settings.EASTER_EGG = originalEasterEgg;
         Settings.OUTPUT_DESKTOP_FOLDER_PATH = originalDesktopPath;
         Settings.CUSTOM_RECORDINGS_DIRECTORY = originalCustomPath;
+    }
+
+    @Test
+    void defaultGuiLauncherSchedulesAndDisplaysTheWindow() throws Exception {
+        Main.guiLauncher.run();
+        onEdt(() -> {
+            for (java.awt.Window window : java.awt.Window.getWindows()) {
+                if (window instanceof DeadParrotGUI deadParrotGUI) {
+                    gui = deadParrotGUI;
+                }
+            }
+            return null;
+        });
+
+        assertTrue(gui != null && gui.isVisible());
+    }
+
+    @Test
+    void installsLookAndFeelByClassNameAndSupportsDarkStartup() throws Exception {
+        LookAndFeel originalLookAndFeel = UIManager.getLookAndFeel();
+        DeadParrotGUI.lookAndFeelInstaller.install("javax.swing.plaf.metal.MetalLookAndFeel");
+        UIManager.setLookAndFeel(originalLookAndFeel);
+
+        Properties properties = new Properties();
+        properties.setProperty("spyMode", "false");
+        properties.setProperty("markerMode", "false");
+        properties.setProperty("keepRecordings", "false");
+        properties.setProperty("printSettings", "false");
+        properties.setProperty("darkMode", "true");
+        properties.setProperty("openOSRecordingSettings", "false");
+        properties.setProperty("saveToDesktop", "false");
+        properties.setProperty("saveToCustomDir", "false");
+        properties.setProperty("easterEgg", "false");
+        try (var output = Files.newOutputStream(settingsFile)) {
+            properties.store(output, "Dark GUI startup test");
+        }
+
+        gui = onEdt(DeadParrotGUI::new);
+        assertTrue(Settings.DARK_MODE);
     }
 
     @Test
@@ -289,9 +330,54 @@ class DeadParrotGUIIntegrationTest {
                 .contains("shutdown failure"));
         onEdt(() -> {
             setField(gui, "processor", null);
+            setField(gui, "processorThread", null);
             invoke(gui, "stopRepeater");
             return null;
         });
+    }
+
+    @Test
+    void exercisesGuiButtonNoOpsCleanupAndDirectorySettingCombinations() throws Exception {
+        gui = onEdt(DeadParrotGUI::new);
+        onEdt(() -> {
+            button(GUILabels.STOP_BUTTON).doClick();
+            setField(gui, "isRunning", true);
+            button(GUILabels.START_BUTTON).doClick();
+            setField(gui, "isRunning", false);
+
+            Settings.SPY_MODE = false;
+            Settings.SAVE_RECORDINGS_TO_DESKTOP = true;
+            Settings.OUTPUT_DESKTOP_FOLDER_PATH = null;
+            Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR = false;
+            Settings.CUSTOM_RECORDINGS_DIRECTORY = null;
+            invoke(gui, "refreshSettingsUIState");
+
+            Settings.SAVE_RECORDINGS_TO_DESKTOP = false;
+            Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR = true;
+            invoke(gui, "refreshSettingsUIState");
+
+            Settings.CUSTOM_RECORDINGS_DIRECTORY = tempDir.toString();
+            invoke(gui, "refreshSettingsUIState");
+
+            Settings.SAVE_RECORDINGS_TO_DESKTOP = true;
+            Settings.OUTPUT_DESKTOP_FOLDER_PATH = tempDir.toString();
+            invoke(gui, "refreshSettingsUIState");
+            Settings.SPY_MODE = true;
+            invoke(gui, "refreshSettingsUIState");
+            Object directoryLabel = field(gui, "dirOutput", false);
+            Settings.SPY_MODE = false;
+            Settings.SAVE_RECORDINGS_TO_DESKTOP = true;
+            Settings.OUTPUT_DESKTOP_FOLDER_PATH = tempDir.toString();
+            setField(gui, "dirOutput", null);
+            invoke(gui, "refreshSettingsUIState");
+            setField(gui, "dirOutput", directoryLabel);
+            setField(gui, "guiLogAppender", null);
+            invoke(gui, "cleanup");
+            return null;
+        });
+
+        assertTrue(checkBox("keepRecordingsEnabled").isSelected());
+        assertTrue(checkBox("openOSSettingsEnabled") != null);
     }
 
     @Test

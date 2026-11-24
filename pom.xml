@@ -124,23 +124,23 @@
                         </goals>
                     </execution>
                     <execution>
-                        <id>check-core-coverage</id>
+                        <id>check-full-project-coverage</id>
                         <phase>verify</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>
                         <configuration>
-                            <includes>
-                                <include>tz/deadparrot/utils/AudioLevelAnalyzer</include>
-                                <include>tz/deadparrot/utils/AudioResourcesPreloader</include>
-                                <include>tz/deadparrot/utils/WaveWriterUtil</include>
-                            </includes>
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>
                                     <limits>
                                         <limit>
                                             <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.99</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
                                             <minimum>0.99</minimum>
                                         </limit>

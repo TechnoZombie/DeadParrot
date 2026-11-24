@@ -672,19 +672,21 @@ public class DeadParrotGUI extends JFrame {
 
             chooseDirectoryButton.setEnabled(true);
 
-            boolean hasValidOutputDirectory = (Settings.SAVE_RECORDINGS_TO_DESKTOP && Settings.OUTPUT_DESKTOP_FOLDER_PATH != null) || (Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR && Settings.CUSTOM_RECORDINGS_DIRECTORY != null);
+            boolean saveToDesktop = Settings.SAVE_RECORDINGS_TO_DESKTOP;
+            boolean saveToCustomDirectory = Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR;
+            String desktopPath = Settings.OUTPUT_DESKTOP_FOLDER_PATH;
+            String customDirectory = Settings.CUSTOM_RECORDINGS_DIRECTORY;
+            boolean hasValidOutputDirectory = (saveToDesktop && desktopPath != null)
+                    || (saveToCustomDirectory && customDirectory != null);
 
             openDirectoryButton.setEnabled(hasValidOutputDirectory);
 
             if (hasValidOutputDirectory && dirOutput != null) {
 
-                if (Settings.SAVE_RECORDINGS_TO_DESKTOP) {
-
+                if (saveToDesktop) {
                     dirOutput.setText(GUILabels.DIR_DESKTOP);
-
-                } else if (Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR) {
-
-                    dirOutput.setText(GUILabels.DIR + SystemUtils.shortenPath(Settings.CUSTOM_RECORDINGS_DIRECTORY, 40));
+                } else {
+                    dirOutput.setText(GUILabels.DIR + SystemUtils.shortenPath(customDirectory, 40));
                 }
             }
 

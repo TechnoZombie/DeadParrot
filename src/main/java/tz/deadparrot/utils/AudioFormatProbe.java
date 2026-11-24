@@ -18,7 +18,7 @@ public class AudioFormatProbe {
     }
 
     public static void probeAudioFormats() {
-        probeAudioFormats(AudioDeviceProvider.SYSTEM);
+        probeAudioFormats(audioDeviceProvider);
     }
 
     static void probeAudioFormats(AudioDeviceProvider audioDeviceProvider) {

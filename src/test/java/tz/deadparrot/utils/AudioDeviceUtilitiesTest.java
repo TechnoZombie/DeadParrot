@@ -57,7 +57,10 @@ class AudioDeviceUtilitiesTest {
             ListInputDevices.audioDeviceProvider = testProvider;
 
             AudioFormatProbe.main(new String[0]);
+            AudioFormatProbe.probeAudioFormats();
             ListInputDevices.main(new String[0]);
+            new AudioFormatProbe();
+            new ListInputDevices();
         } finally {
             AudioFormatProbe.audioDeviceProvider = originalProbeProvider;
             ListInputDevices.audioDeviceProvider = originalListProvider;

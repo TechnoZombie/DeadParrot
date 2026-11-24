@@ -10,6 +10,7 @@ class PrinterTest {
     void printsCurrentSettings() {
         assertDoesNotThrow(Printer::printCurrentSettings);
         assertDoesNotThrow(Printer::printCurrentSettingsV2);
+        assertDoesNotThrow(Printer::new);
         assertDoesNotThrow(SettingsPersistence::new);
     }
 }

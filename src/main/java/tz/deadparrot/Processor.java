@@ -17,7 +17,8 @@ import java.util.function.Supplier;
 public class Processor {
     private AudioRecorder audioRecorder;
     private Listener listener;
-    private Supplier<AudioRecorder> recorderFactory = Processor::createAudioRecorder;
+    private Supplier<AudioRecorder> recorderFactory =
+            () -> createAudioRecorder(AudioInputProvider.SYSTEM);
     private Function<AudioRecorder, Listener> listenerFactory = Listener::new;
     private Supplier<AudioMarker> markerFactory = AudioMarker::new;
     private Supplier<AudioResourcesPreloader> preloaderFactory = AudioResourcesPreloader::new;
@@ -96,9 +97,9 @@ public class Processor {
         listener.start();
     }
 
-    private static AudioRecorder createAudioRecorder() {
+    static AudioRecorder createAudioRecorder(AudioInputProvider audioInputProvider) {
         try {
-            return new AudioRecorder();
+            return new AudioRecorder(audioInputProvider);
         } catch (LineUnavailableException e) {
             throw new RuntimeException(e);
         }

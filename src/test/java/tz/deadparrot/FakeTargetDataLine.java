@@ -13,15 +13,29 @@ final class FakeTargetDataLine implements TargetDataLine {
     private int position;
     private boolean open;
     private boolean running;
+    private final boolean blockAfterAudioEnds;
 
     FakeTargetDataLine(AudioFormat format, byte[] audioData) {
+        this(format, audioData, false);
+    }
+
+    FakeTargetDataLine(AudioFormat format, byte[] audioData, boolean blockAfterAudioEnds) {
         this.format = format;
         this.audioData = audioData;
+        this.blockAfterAudioEnds = blockAfterAudioEnds;
     }
 
     @Override public void open(AudioFormat format, int bufferSize) { open = true; }
     @Override public void open(AudioFormat format) { open = true; }
-    @Override public int read(byte[] buffer, int offset, int length) {
+    @Override public synchronized int read(byte[] buffer, int offset, int length) {
+        while (position == audioData.length && blockAfterAudioEnds && open && running) {
+            try {
+                wait();
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                return -1;
+            }
+        }
         if (position == audioData.length) return -1;
         int count = Math.min(length, audioData.length - position);
         System.arraycopy(audioData, position, buffer, offset, count);
@@ -29,7 +43,7 @@ final class FakeTargetDataLine implements TargetDataLine {
         return count;
     }
     @Override public void open() { open = true; }
-    @Override public void close() { open = false; running = false; }
+    @Override public synchronized void close() { open = false; running = false; notifyAll(); }
     @Override public boolean isOpen() { return open; }
     @Override public void start() { running = true; }
     @Override public void stop() { running = false; }

@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -133,6 +134,92 @@ class ProcessorIntegrationTest {
         processor.logShutdownMessage();
         Settings.EASTER_EGG = true;
         processor.logShutdownMessage();
+    }
+
+    @Test
+    void shutsDownSafelyBeforeComponentsAreInitialized() {
+        new Processor().shutdown();
+    }
+
+    @Test
+    void appliesSpySettingsWithoutMarkerMode() throws Exception {
+        configureStandardMode();
+        Settings.SPY_MODE = true;
+        invokeApplySettings(newProcessor(AudioMarker::new));
+
+        assertTrue(Settings.KEEP_RECORDINGS);
+        assertFalse(Settings.MARKER_MODE);
+    }
+
+    @Test
+    void wrapsDefaultRecorderLineUnavailableFailure() {
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> Processor.createAudioRecorder(new AudioInputProvider() {
+                    @Override public boolean isLineSupported(DataLine.Info lineInfo) { return true; }
+                    @Override public TargetDataLine getLine(DataLine.Info lineInfo)
+                            throws LineUnavailableException {
+                        throw new LineUnavailableException("no input device");
+                    }
+                }));
+
+        assertTrue(exception.getCause() instanceof LineUnavailableException);
+    }
+
+    @Test
+    void wrapsMarkerResourceFailureDuringInitializationAndShutsDownListener() throws Exception {
+        configureStandardMode();
+        AudioRecorder recorder = createRecorder(
+                new FakeTargetDataLine(Settings.AUDIO_FORMAT, new byte[0]));
+        Processor processor = new Processor(
+                () -> recorder,
+                audioRecorder -> new Listener(audioRecorder, inputProvider(
+                        new FakeTargetDataLine(Settings.AUDIO_FORMAT, new byte[0]))) {
+                    @Override public void run() { }
+                },
+                AudioMarker::new,
+                () -> new AudioResourcesPreloader() {
+                    @Override
+                    public File copyMarkerToTemp() throws IOException {
+                        throw new IOException("missing marker");
+                    }
+                });
+
+        RuntimeException exception = assertThrows(RuntimeException.class, processor::init);
+        assertTrue(exception.getCause() instanceof IOException);
+        assertNotNull(processor.shutdownHook);
+        Runtime.getRuntime().removeShutdownHook(processor.shutdownHook);
+        processor.shutdown();
+    }
+
+    @Test
+    void appliesDefaultRecordingDirectoryAndOpensNoOsDialogWhenUnsupported() throws Exception {
+        configureStandardMode();
+        Settings.KEEP_RECORDINGS = true;
+        Settings.OPEN_OS_RECORDING_SETTINGS = true;
+        Constants.IS_WINDOWS = false;
+        Constants.IS_LINUX = false;
+        Path recordingDirectory = Path.of(Constants.OUTPUT_FOLDER_PATH);
+        boolean directoryExisted = Files.exists(recordingDirectory);
+
+        try {
+            invokeApplySettings(newProcessor(AudioMarker::new));
+            assertTrue(Files.isDirectory(recordingDirectory));
+        } finally {
+            if (!directoryExisted) {
+                Files.deleteIfExists(recordingDirectory);
+            }
+        }
+    }
+
+    @Test
+    void appliesDesktopRecordingDirectory() throws Exception {
+        configureStandardMode();
+        Settings.KEEP_RECORDINGS = true;
+        Settings.SAVE_RECORDINGS_TO_DESKTOP = true;
+        Settings.OUTPUT_DESKTOP_FOLDER_PATH = tempDir + File.separator;
+        invokeApplySettings(newProcessor(AudioMarker::new));
+
+        assertTrue(Files.isDirectory(tempDir));
     }
 
     private void configureStandardMode() {

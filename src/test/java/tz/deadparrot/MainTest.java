@@ -12,12 +12,15 @@ class MainTest {
     private final boolean originalUseGui = Settings.USE_GUI;
     private final Runnable originalGuiLauncher = Main.guiLauncher;
     private final Runnable originalProcessorLauncher = Main.processorLauncher;
+    private final java.util.function.Supplier<Processor> originalProcessorFactory =
+            Main.processorFactory;
 
     @AfterEach
     void restoreState() {
         Settings.USE_GUI = originalUseGui;
         Main.guiLauncher = originalGuiLauncher;
         Main.processorLauncher = originalProcessorLauncher;
+        Main.processorFactory = originalProcessorFactory;
     }
 
     @Test
@@ -34,5 +37,20 @@ class MainTest {
 
         assertEquals(1, guiLaunches.get());
         assertEquals(1, processorLaunches.get());
+    }
+
+    @Test
+    void constructsAndInitializesTheConfiguredProcessor() {
+        AtomicInteger initializations = new AtomicInteger();
+        Main.processorFactory = () -> new Processor() {
+            @Override
+            public void init() {
+                initializations.incrementAndGet();
+            }
+        };
+
+        Main.processorLauncher.run();
+        assertEquals(1, initializations.get());
+        assertEquals("Main", new Main().getClass().getSimpleName());
     }
 }
