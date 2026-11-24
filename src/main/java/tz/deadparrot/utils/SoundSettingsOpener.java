@@ -4,9 +4,20 @@ import lombok.extern.slf4j.Slf4j;
 import tz.deadparrot.Constants;
 
 import java.io.IOException;
+import java.util.List;
 
 @Slf4j
 public class SoundSettingsOpener {
+    static ProcessLauncher processLauncher = command -> new ProcessBuilder(command).start();
+
+    @FunctionalInterface
+    interface ProcessLauncher {
+        Process start(List<String> command) throws IOException;
+    }
+
+    private static Process start(String... command) throws IOException {
+        return processLauncher.start(List.of(command));
+    }
 
     /**
      * Opens Sound Settings directly to the Recording tab
@@ -15,10 +26,10 @@ public class SoundSettingsOpener {
 
         if (Constants.IS_WINDOWS) {
             try {
-                new ProcessBuilder("ms-settings:sound-devices").start();
+                start("ms-settings:sound-devices");
             } catch (IOException e) {
                 try {
-                    new ProcessBuilder("control", "mmsys.cpl,,1").start();
+                    start("control", "mmsys.cpl,,1");
                     log.info(Constants.OPENED_OS_RECORDING_SETTINGS);
                 } catch (IOException fallbackException) {
                     log.error(Constants.FAILED_TO_OPEN_SOUND_SETTINGS + fallbackException.getMessage());
@@ -27,11 +38,11 @@ public class SoundSettingsOpener {
         } else if (Constants.IS_LINUX) {
             try {
                 // Try GNOME
-                new ProcessBuilder("gnome-control-center", "sound").start();
+                start("gnome-control-center", "sound");
             } catch (IOException gnomeFail) {
                 try {
                     // Try PulseAudio control
-                    new ProcessBuilder("pavucontrol").start();
+                    start("pavucontrol");
                 } catch (IOException pulseFail) {
                     log.error("Could not open Linux recording settings: " + pulseFail.getMessage());
                 }
@@ -45,8 +56,7 @@ public class SoundSettingsOpener {
     public static void openRecordingSettingsClassic() {
         try {
             // Opens the classic Sound control panel directly to Recording tab
-            ProcessBuilder pb = new ProcessBuilder("rundll32.exe", "shell32.dll,Control_RunDLL", "mmsys.cpl,,1");
-            pb.start();
+            start("rundll32.exe", "shell32.dll,Control_RunDLL", "mmsys.cpl,,1");
             log.info(Constants.OPENED_OS_RECORDING_SETTINGS);
 
         } catch (IOException e) {
@@ -61,7 +71,7 @@ public class SoundSettingsOpener {
 
         if (Constants.IS_WINDOWS) {
             try {
-                new ProcessBuilder("control", "mmsys.cpl,,0").start();
+                start("control", "mmsys.cpl,,0");
                 log.info(Constants.OPENED_OS_PLAYBACK_SETTINGS);
 
             } catch (IOException e) {

@@ -1,6 +1,7 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
+import tz.deadparrot.utils.AudioLevelAnalyzer;
 import tz.deadparrot.utils.FileUtils;
 import tz.deadparrot.utils.WaveWriterUtil;
 
@@ -19,11 +20,15 @@ public class AudioRecorder {
     WaveWriterUtil waveWriterUtil = new WaveWriterUtil();
 
     public AudioRecorder() throws LineUnavailableException {
-        if (!AudioSystem.isLineSupported(dataInfo)) {
+        this(AudioInputProvider.SYSTEM);
+    }
+
+    AudioRecorder(AudioInputProvider audioInputProvider) throws LineUnavailableException {
+        if (!audioInputProvider.isLineSupported(dataInfo)) {
             log.error(Constants.LINE_NOT_SUPPORTED);
         }
 
-        recorderLine = (TargetDataLine) AudioSystem.getLine(dataInfo);
+        recorderLine = audioInputProvider.getLine(dataInfo);
         recordingStream = new AudioInputStream(recorderLine);
         log.info(Constants.LINE_IN_READY);
     }
@@ -54,7 +59,7 @@ public class AudioRecorder {
         // Wait for either timeout or silence detection
         long startTime = System.currentTimeMillis();
         try {
-            while (recordingActive.get() && !silenceDetected.get()) {
+            while (recordingActive.get() && !silenceDetected.get() && audioRecorderThread.isAlive()) {
                 Thread.sleep(100); // Check every 100ms
 
                 // Check if we've exceeded max recording time
@@ -84,9 +89,9 @@ public class AudioRecorder {
         }
     }
 
-    private void recordWithMonitoring(AudioInputStream audioStream, File outputFile,
-                                      int silenceThreshold, int silenceDurationMs,
-                                      AtomicBoolean silenceDetected, AtomicBoolean recordingActive)
+    void recordWithMonitoring(AudioInputStream audioStream, File outputFile,
+                               int silenceThreshold, int silenceDurationMs,
+                               AtomicBoolean silenceDetected, AtomicBoolean recordingActive)
             throws IOException {
 
         AudioFormat format = audioStream.getFormat();
@@ -109,7 +114,7 @@ public class AudioRecorder {
                 totalBytesWritten += bytesRead;
 
                 // Monitor audio level
-                double audioLevel = calculateAudioLevel(buffer, bytesRead, format);
+                double audioLevel = AudioLevelAnalyzer.calculateAudioLevel(buffer, bytesRead, format);
 
                 if (audioLevel > silenceThreshold) {
                     lastSoundTime = System.currentTimeMillis();
@@ -120,40 +125,10 @@ public class AudioRecorder {
             }
 
             // Update WAV header with actual data size
+            bos.flush();
             waveWriterUtil.startUpdateWavHeader(outputFile, totalBytesWritten);
         }
     }
-
-    private double calculateAudioLevel(byte[] buffer, int bytesRead, AudioFormat format) {
-        if (format.getSampleSizeInBits() == 16) {
-            // 16-bit audio
-            long sum = 0;
-            int sampleCount = 0;
-
-            for (int i = 0; i < bytesRead - 1; i += 2) {
-                short sample;
-                if (format.isBigEndian()) {
-                    sample = (short) ((buffer[i] << 8) | (buffer[i + 1] & 0xFF));
-                } else {
-                    sample = (short) ((buffer[i + 1] << 8) | (buffer[i] & 0xFF));
-                }
-                sum += Math.abs(sample);
-                sampleCount++;
-            }
-
-            return sampleCount > 0 ? (double) sum / sampleCount : 0;
-        } else if (format.getSampleSizeInBits() == 8) {
-            // 8-bit audio
-            long sum = 0;
-            for (int i = 0; i < bytesRead; i++) {
-                sum += Math.abs(buffer[i] - 128); // 8-bit is unsigned, center at 128
-            }
-            return bytesRead > 0 ? (double) sum / bytesRead : 0;
-        }
-
-        return 0; // Unsupported format
-    }
-
 
     public void stop() {
         recorderLine.stop();

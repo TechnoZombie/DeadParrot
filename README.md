@@ -54,6 +54,19 @@ This project mimics the behavior of a repeater station by automatically handling
 - **`Printer.java`** – Utility for printing current settings to console.
 - **`AudioFormatProbe.java`** – Audio format detection utilities.
 - **`ListInputDevices.java`** – Lists available audio input devices.
+- **`AudioLevelAnalyzer.java`** – Pure audio-sample analysis used by the listener and recorder.
+
+## 🧪 Tests
+
+Run the test suite with `mvn test`. To enforce the core-logic coverage target, run
+`mvn verify`; JaCoCo requires at least 99% line coverage across
+`AudioLevelAnalyzer`, `AudioResourcesPreloader`, and `WaveWriterUtil`. A full coverage report is generated at
+`target/site/jacoco/index.html`.
+
+The coverage gate focuses on deterministic logic that can be tested without audio
+devices, an operating-system desktop, or a graphical display. The report still
+includes the rest of the application, whose hardware and UI integration requires
+separate environment-dependent tests.
 
 ---
 

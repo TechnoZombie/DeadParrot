@@ -19,7 +19,7 @@ public class AudioResourcesPreloader {
         return copyResourceToTemp(Constants.MARKER_FILE_PATH, "tempMarker");
     }
 
-    private File copyResourceToTemp(String resourcePath, String tempPrefix) throws IOException {
+    File copyResourceToTemp(String resourcePath, String tempPrefix) throws IOException {
         // Get the resource as an InputStream
         InputStream inputStream = getClass().getResourceAsStream(resourcePath);
         if (inputStream == null) {

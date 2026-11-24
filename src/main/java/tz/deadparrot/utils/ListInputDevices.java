@@ -12,6 +12,7 @@ import javax.sound.sampled.*;
  * </p>
  */
 public class ListInputDevices {
+    static AudioDeviceProvider audioDeviceProvider = AudioDeviceProvider.SYSTEM;
 
     /**
      * The main method retrieves and lists all audio input devices.
@@ -24,13 +25,16 @@ public class ListInputDevices {
      * @param args Command-line arguments (not used).
      */
     public static void main(String[] args) {
-        // Get all available mixer info objects
-        Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
+        listInputDevices(audioDeviceProvider);
+    }
+
+    static void listInputDevices(AudioDeviceProvider audioDeviceProvider) {
+        Mixer.Info[] mixerInfos = audioDeviceProvider.getMixerInfo();
 
         // Iterate through each mixer info
         for (Mixer.Info info : mixerInfos) {
             // Get the corresponding mixer from the info
-            Mixer mixer = AudioSystem.getMixer(info);
+            Mixer mixer = audioDeviceProvider.getMixer(info);
 
             // Get target line information (input lines)
             Line.Info[] targetLineInfos = mixer.getTargetLineInfo();

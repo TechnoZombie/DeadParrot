@@ -6,6 +6,7 @@ import tz.deadparrot.Settings;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Properties;
 
 @Slf4j
@@ -14,6 +15,10 @@ public class SettingsPersistence {
     private static final String SETTINGS_FILE = "deadparrot.settings";
 
     public static void saveSettings() {
+        saveSettings(Path.of(SETTINGS_FILE));
+    }
+
+    static void saveSettings(Path settingsFile) {
 
         Properties properties = new Properties();
 
@@ -35,7 +40,7 @@ public class SettingsPersistence {
 
         properties.setProperty("easterEgg", String.valueOf(Settings.EASTER_EGG));
 
-        try (FileOutputStream fos = new FileOutputStream(SETTINGS_FILE)) {
+        try (FileOutputStream fos = new FileOutputStream(settingsFile.toFile())) {
 
             properties.store(fos, "DeadParrot Settings");
 
@@ -47,10 +52,14 @@ public class SettingsPersistence {
     }
 
     public static void loadSettings() {
+        loadSettings(Path.of(SETTINGS_FILE));
+    }
+
+    static void loadSettings(Path settingsFile) {
 
         Properties properties = new Properties();
 
-        try (FileInputStream fis = new FileInputStream(SETTINGS_FILE)) {
+        try (FileInputStream fis = new FileInputStream(settingsFile.toFile())) {
 
             properties.load(fis);
 

@@ -4,10 +4,14 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import javax.swing.LookAndFeel;
 import java.awt.*;
 import java.awt.event.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.function.IntConsumer;
+import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
@@ -55,6 +59,33 @@ public class DeadParrotGUI extends JFrame {
     private Thread processorThread;
     private GuiLogAppender guiLogAppender;
 
+    interface LookAndFeelInstaller {
+        void install(LookAndFeel lookAndFeel) throws UnsupportedLookAndFeelException;
+        void install(String className) throws ClassNotFoundException, InstantiationException,
+                IllegalAccessException, UnsupportedLookAndFeelException;
+    }
+
+    static LookAndFeelInstaller lookAndFeelInstaller = new LookAndFeelInstaller() {
+        @Override public void install(LookAndFeel lookAndFeel) throws UnsupportedLookAndFeelException {
+            UIManager.setLookAndFeel(lookAndFeel);
+        }
+        @Override public void install(String className) throws ClassNotFoundException,
+                InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
+            UIManager.setLookAndFeel(className);
+        }
+    };
+
+    Supplier<Processor> processorFactory = Processor::new;
+    Runnable audioProbe = AudioFormatProbe::probeAudioFormats;
+    Supplier<JFileChooser> directoryChooserFactory = JFileChooser::new;
+    Runnable openDirectory = FileUtils::openDestinationFolder;
+    Runnable openPlaybackSettings = SoundSettingsOpener::openPlaybackSettings;
+    Runnable openRecordingSettings = SoundSettingsOpener::openRecordingSettings;
+    IntSupplier exitConfirmation = () -> JOptionPane.showConfirmDialog(this,
+            "Repeater is still running. Stop it before exiting?", "Confirm Exit",
+            JOptionPane.YES_NO_CANCEL_OPTION);
+    IntConsumer exitAction = System::exit;
+
     public DeadParrotGUI() {
         SettingsPersistence.loadSettings();
         SystemUtils.detectOSandSetPaths(false);
@@ -67,13 +98,13 @@ public class DeadParrotGUI extends JFrame {
     private void setupLookAndFeel() {
         try {
             if (Settings.DARK_MODE) {
-                UIManager.setLookAndFeel(new FlatDarculaLaf());
+                lookAndFeelInstaller.install(new FlatDarculaLaf());
             } else {
-                UIManager.setLookAndFeel(new FlatLightLaf());
+                lookAndFeelInstaller.install(new FlatLightLaf());
             }
         } catch (Exception e) {
             try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                lookAndFeelInstaller.install(UIManager.getSystemLookAndFeelClassName());
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
                      UnsupportedLookAndFeelException ex) {
                 log.error("Failed to set look and feel", ex);
@@ -292,15 +323,9 @@ public class DeadParrotGUI extends JFrame {
 
         chooseDirectoryButton.addActionListener(e -> {
 
-            JFileChooser chooser = new JFileChooser();
-
-            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-            int returnVal = chooser.showOpenDialog(this);
-
-            if (returnVal == JFileChooser.APPROVE_OPTION) {
-
-                String selectedDirectory = chooser.getSelectedFile().getAbsolutePath() + Constants.CUSTOM_RECORDINGS_DIRECTORY_PREFIX;
+            String selectedDirectory = chooseDirectory();
+            if (selectedDirectory != null) {
+                selectedDirectory += Constants.CUSTOM_RECORDINGS_DIRECTORY_PREFIX;
 
                 FileUtils.verifyAndCreateOutputFolder(selectedDirectory);
 
@@ -321,7 +346,7 @@ public class DeadParrotGUI extends JFrame {
 
         refreshSettingsUIState();
 
-        openDirectoryButton.addActionListener(e -> FileUtils.openDestinationFolder());
+        openDirectoryButton.addActionListener(e -> openDirectory.run());
 
         dirOutput = new JLabel(GUILabels.DIR_NOT_SET);
         dirOutput.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
@@ -369,7 +394,7 @@ public class DeadParrotGUI extends JFrame {
 
             new Thread(() -> {
                 try {
-                    AudioFormatProbe.probeAudioFormats();
+                    audioProbe.run();
                     log.info(GUILabels.LOG_AUDIO_PROBE_COMPLETED);
 
                 } finally {
@@ -378,9 +403,9 @@ public class DeadParrotGUI extends JFrame {
             }, "AudioProbeThread").start();
         });
 
-        openPlaybackSettingsButton.addActionListener(e -> SoundSettingsOpener.openPlaybackSettings());
+        openPlaybackSettingsButton.addActionListener(e -> openPlaybackSettings.run());
 
-        openRecordingSettingsButton.addActionListener(e -> SoundSettingsOpener.openRecordingSettings());
+        openRecordingSettingsButton.addActionListener(e -> openRecordingSettings.run());
 
         panel.add(runAudioProbeButton);
         panel.add(openPlaybackSettingsButton);
@@ -445,7 +470,7 @@ public class DeadParrotGUI extends JFrame {
         updateSettings();
 
         try {
-            processor = new Processor();
+            processor = processorFactory.get();
             processorThread = new Thread(() -> {
                 try {
                     processor.init();
@@ -503,19 +528,19 @@ public class DeadParrotGUI extends JFrame {
 
     private void handleExit() {
         if (isRunning) {
-            int result = JOptionPane.showConfirmDialog(this, "Repeater is still running. Stop it before exiting?", "Confirm Exit", JOptionPane.YES_NO_CANCEL_OPTION);
+            int result = exitConfirmation.getAsInt();
 
             if (result == JOptionPane.YES_OPTION) {
                 stopRepeater();
                 cleanup();
-                System.exit(0);
+                exitAction.accept(0);
             } else if (result == JOptionPane.NO_OPTION) {
                 cleanup();
-                System.exit(0);
+                exitAction.accept(0);
             }
         } else {
             cleanup();
-            System.exit(0);
+            exitAction.accept(0);
         }
     }
 
@@ -598,9 +623,9 @@ public class DeadParrotGUI extends JFrame {
     private void setLookAndFeel(boolean dark) {
         try {
             if (dark) {
-                UIManager.setLookAndFeel(new FlatDarculaLaf());
+                lookAndFeelInstaller.install(new FlatDarculaLaf());
             } else {
-                UIManager.setLookAndFeel(new FlatLightLaf());
+                lookAndFeelInstaller.install(new FlatLightLaf());
             }
             SwingUtilities.updateComponentTreeUI(this);
         } catch (Exception e) {
@@ -616,6 +641,15 @@ public class DeadParrotGUI extends JFrame {
             consoleOutput.setBackground(Color.WHITE);
             consoleOutput.setForeground(Color.BLACK);
         }
+    }
+
+    private String chooseDirectory() {
+        JFileChooser chooser = directoryChooserFactory.get();
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int returnValue = chooser.showOpenDialog(this);
+        return returnValue == JFileChooser.APPROVE_OPTION
+                ? chooser.getSelectedFile().getAbsolutePath()
+                : null;
     }
 
     private void refreshSettingsUIState() {

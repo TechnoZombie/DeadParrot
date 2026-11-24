@@ -13,13 +13,19 @@ import javax.swing.*;
 
 @Slf4j
 public class Main {
+    static Runnable guiLauncher =
+            () -> SwingUtilities.invokeLater(() -> new DeadParrotGUI().setVisible(true));
+    static Runnable processorLauncher = () -> {
+        Processor processor = new Processor();
+        processor.init();
+    };
+
     public static void main(String[] args) {
 
         if (Settings.USE_GUI) {
-            SwingUtilities.invokeLater(() -> new DeadParrotGUI().setVisible(true));
+            guiLauncher.run();
         } else {
-            Processor processor = new Processor();
-            processor.init();
+            processorLauncher.run();
         }
     }
 }

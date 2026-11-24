@@ -2,20 +2,35 @@ package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.function.Supplier;
+
 @Slf4j
 public class AudioMarker {
 
     AudioPlayer player;
     Processor subProcessor;
+    private final Supplier<AudioPlayer> playerFactory;
+    private final long markerInterval;
+    Thread shutdownHook;
+
+    public AudioMarker() {
+        this(AudioPlayer::new, Settings.MARKER_TIME);
+    }
+
+    AudioMarker(Supplier<AudioPlayer> playerFactory, long markerInterval) {
+        this.playerFactory = playerFactory;
+        this.markerInterval = markerInterval;
+    }
 
     public void runMarkerMode(Processor processor) {
         this.subProcessor = processor;
         int procCounter = 0;
         log.info(Constants.RUNNING_IN_MARKER_MODE);
         log.info(Settings.MARKER_ENABLED);
-        player = new AudioPlayer();
+        player = playerFactory.get();
 
-        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownMarkerMode));
+        shutdownHook = new Thread(this::shutdownMarkerMode);
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
 
         while (!Thread.currentThread().isInterrupted()) {
             procCounter++;
@@ -23,7 +38,7 @@ public class AudioMarker {
             player.playMarker();
 
             try {
-                Thread.sleep(Settings.MARKER_TIME);
+                Thread.sleep(markerInterval);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;

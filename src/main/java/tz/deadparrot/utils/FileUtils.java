@@ -14,6 +14,12 @@ import java.time.LocalDateTime;
 
 @Slf4j
 public class FileUtils {
+    @FunctionalInterface
+    interface DirectoryOpener {
+        void open(File directory) throws IOException;
+    }
+
+    static DirectoryOpener directoryOpener = directory -> Desktop.getDesktop().open(directory);
 
     public static void verifyAndCreateOutputFolder(String dirPath) {
         try {
@@ -77,10 +83,10 @@ public class FileUtils {
         }
 
         try {
-            Desktop.getDesktop().open(directory);
+            directoryOpener.open(directory);
 
         } catch (IOException ex) {
-            ex.printStackTrace();
+            log.error("Unable to open destination folder: {}", path, ex);
         }
     }
 }

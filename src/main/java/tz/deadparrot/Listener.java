@@ -1,6 +1,7 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
+import tz.deadparrot.utils.AudioLevelAnalyzer;
 
 import javax.sound.sampled.*;
 import java.io.ByteArrayOutputStream;
@@ -12,9 +13,15 @@ public class Listener extends Thread {
     private volatile boolean running = true;
     private TargetDataLine line = null;
     private boolean keepAlive = true;
+    private final AudioInputProvider audioInputProvider;
 
     public Listener(AudioRecorder recorder) {
+        this(recorder, AudioInputProvider.SYSTEM);
+    }
+
+    Listener(AudioRecorder recorder, AudioInputProvider audioInputProvider) {
         this.recorder = recorder;
+        this.audioInputProvider = audioInputProvider;
     }
 
     @Override
@@ -23,12 +30,12 @@ public class Listener extends Thread {
         while (keepAlive) {
             try {
                 DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
-                if (!AudioSystem.isLineSupported(info)) {
+                if (!audioInputProvider.isLineSupported(info)) {
                     log.error(Constants.LINE_NOT_SUPPORTED);
                     return;
                 }
 
-                line = (TargetDataLine) AudioSystem.getLine(info);
+                line = audioInputProvider.getLine(info);
                 line.open(format);
                 line.start();
 
@@ -40,7 +47,8 @@ public class Listener extends Thread {
                 while (running) {
                     int bytesRead = line.read(buffer, 0, buffer.length);
                     if (bytesRead > 0) {
-                        if (detectSound(buffer, bytesRead)) {
+                        if (AudioLevelAnalyzer.detectSound(
+                                buffer, bytesRead, Settings.SOUND_DETECTION_SENSITIVITY)) {
                             log.info(Constants.SOUND_DETECTED);
                             line.stop();
                             line.close();
@@ -59,16 +67,6 @@ public class Listener extends Thread {
                 }
             }
         }
-    }
-
-    private boolean detectSound(byte[] audioData, int length) {
-        for (int i = 0; i < length - 1; i += 2) {
-            int sample = (audioData[i + 1] << 8) | (audioData[i] & 0xff);
-            if (Math.abs(sample) > Settings.SOUND_DETECTION_SENSITIVITY) { // adjust this threshold if needed
-                return true;
-            }
-        }
-        return false;
     }
 
     public void shutdown() {

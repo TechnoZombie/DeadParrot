@@ -11,15 +11,21 @@ import javax.sound.sampled.*;
 
 @Slf4j
 public class AudioFormatProbe {
+    static AudioDeviceProvider audioDeviceProvider = AudioDeviceProvider.SYSTEM;
+
     public static void main(String[] args) {
-        probeAudioFormats();
+        probeAudioFormats(audioDeviceProvider);
     }
 
     public static void probeAudioFormats() {
-        Mixer.Info[] mixers = AudioSystem.getMixerInfo();
+        probeAudioFormats(AudioDeviceProvider.SYSTEM);
+    }
+
+    static void probeAudioFormats(AudioDeviceProvider audioDeviceProvider) {
+        Mixer.Info[] mixers = audioDeviceProvider.getMixerInfo();
 
         for (Mixer.Info mixerInfo : mixers) {
-            Mixer mixer = AudioSystem.getMixer(mixerInfo);
+            Mixer mixer = audioDeviceProvider.getMixer(mixerInfo);
             Line.Info[] lineInfos = mixer.getTargetLineInfo();
 
             if (lineInfos.length == 0) continue; // Not an input mixer

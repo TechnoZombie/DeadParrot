@@ -5,6 +5,7 @@ import tz.deadparrot.utils.AudioResourcesPreloader;
 
 import javax.sound.sampled.*;
 import java.io.*;
+import java.util.function.Supplier;
 
 @Slf4j
 public class AudioPlayer {
@@ -12,10 +13,21 @@ public class AudioPlayer {
     private File leadingPing;
     private File markerFile;
     private Thread audioPlayerThread;
+    private final AudioPlaybackProvider playbackProvider;
 
 
     public AudioPlayer() {
-        AudioResourcesPreloader preloader = new AudioResourcesPreloader();
+        this(AudioPlaybackProvider.SYSTEM, AudioResourcesPreloader::new);
+    }
+
+    AudioPlayer(AudioPlaybackProvider playbackProvider) {
+        this(playbackProvider, AudioResourcesPreloader::new);
+    }
+
+    AudioPlayer(AudioPlaybackProvider playbackProvider,
+                Supplier<AudioResourcesPreloader> preloaderFactory) {
+        this.playbackProvider = playbackProvider;
+        AudioResourcesPreloader preloader = preloaderFactory.get();
         try {
             // Only preload leadingPing if neither marker mode nor spy mode is active
             if (!Settings.MARKER_MODE && !Settings.SPY_MODE) {
@@ -37,8 +49,8 @@ public class AudioPlayer {
                 this.filePath = fileToPlay;
 
                 if (filePath.exists()) {
-                    AudioInputStream audioInput = AudioSystem.getAudioInputStream(filePath);
-                    Clip clip = AudioSystem.getClip();
+                    AudioInputStream audioInput = playbackProvider.getAudioInputStream(filePath);
+                    Clip clip = playbackProvider.getClip();
                     clip.open(audioInput);
 
                     Object playbackCompletedLock = new Object();

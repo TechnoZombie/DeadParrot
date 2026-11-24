@@ -10,11 +10,31 @@ import tz.deadparrot.utils.ParrotQuotes;
 
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Slf4j
 public class Processor {
     private AudioRecorder audioRecorder;
     private Listener listener;
+    private Supplier<AudioRecorder> recorderFactory = Processor::createAudioRecorder;
+    private Function<AudioRecorder, Listener> listenerFactory = Listener::new;
+    private Supplier<AudioMarker> markerFactory = AudioMarker::new;
+    private Supplier<AudioResourcesPreloader> preloaderFactory = AudioResourcesPreloader::new;
+    Thread shutdownHook;
+
+    public Processor() {
+    }
+
+    Processor(Supplier<AudioRecorder> recorderFactory,
+              Function<AudioRecorder, Listener> listenerFactory,
+              Supplier<AudioMarker> markerFactory,
+              Supplier<AudioResourcesPreloader> preloaderFactory) {
+        this.recorderFactory = recorderFactory;
+        this.listenerFactory = listenerFactory;
+        this.markerFactory = markerFactory;
+        this.preloaderFactory = preloaderFactory;
+    }
 
     public void init() {
 
@@ -24,7 +44,7 @@ public class Processor {
         setupShutdownHook();
 
         try {
-            new AudioResourcesPreloader().copyMarkerToTemp();
+            preloaderFactory.get().copyMarkerToTemp();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -39,7 +59,7 @@ public class Processor {
         }
 
         if (Settings.MARKER_MODE) {
-            new AudioMarker().runMarkerMode(this);
+            markerFactory.get().runMarkerMode(this);
         } else if (!Settings.SPY_MODE && !Settings.MARKER_MODE) {
             log.info(Constants.RUNNING_IN_STANDARD_MODE);
         }
@@ -66,19 +86,28 @@ public class Processor {
 
     private void initializeComponents() {
         try {
-            audioRecorder = new AudioRecorder();
-        } catch (LineUnavailableException e) {
+            audioRecorder = recorderFactory.get();
+        } catch (RuntimeException e) {
             log.error(Constants.LINE_UNAVAILABLE, e);
-            throw new RuntimeException(e);
+            throw e;
         }
 
-        listener = new Listener(audioRecorder);
+        listener = listenerFactory.apply(audioRecorder);
         listener.start();
+    }
+
+    private static AudioRecorder createAudioRecorder() {
+        try {
+            return new AudioRecorder();
+        } catch (LineUnavailableException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
     private void setupShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+        shutdownHook = new Thread(this::shutdown);
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
     void shutdown() {
