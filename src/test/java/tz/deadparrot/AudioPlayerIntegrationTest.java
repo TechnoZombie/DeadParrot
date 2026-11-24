@@ -4,13 +4,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tz.deadparrot.utils.AudioResourcesPreloader;
+import tz.deadparrot.utils.AudioDeviceManager;
+import tz.deadparrot.utils.AudioDeviceManagerTestSupport;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.Control;
 import javax.sound.sampled.Line;
 import javax.sound.sampled.LineEvent;
 import javax.sound.sampled.LineListener;
+import javax.sound.sampled.Mixer;
 import java.io.IOException;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -302,6 +306,44 @@ class AudioPlayerIntegrationTest {
         assertFalse(playerThread(player).isAlive());
     }
 
+    @Test
+    void playsThroughSelectedOutputMixerAndFallsBackWhenUnavailable() throws Exception {
+        Settings.SPY_MODE = true;
+        Settings.MARKER_MODE = false;
+        Mixer.Info info = new Mixer.Info("Output", "Test", "Test mixer", "1") {};
+        AudioDeviceManager.AudioDevice device =
+                new AudioDeviceManager.AudioDevice("Output", info);
+        Clip selectedClip = provider().getClip();
+        Mixer mixer = mixer(info, selectedClip);
+        AudioPlaybackProvider playback = new AudioPlaybackProvider() {
+            @Override
+            public AudioInputStream getAudioInputStream(File file) {
+                return new AudioInputStream(new ByteArrayInputStream(new byte[0]),
+                        new AudioFormat(8000, 16, 1, true, false), 0);
+            }
+
+            @Override
+            public Clip getClip() {
+                throw new AssertionError("selected mixer should supply the clip");
+            }
+        };
+        Path recording = Files.createFile(tempDir.resolve("selected-output.wav"));
+        try (AutoCloseable ignored = AudioDeviceManagerTestSupport.install(
+                new Mixer.Info[]{info}, requested -> mixer, requested -> true)) {
+            AudioPlayer player = new AudioPlayer(playback, device);
+            player.play(recording.toFile());
+            assertFalse(playerThread(player).isAlive());
+        }
+
+        AudioPlayer fallback = new AudioPlayer(provider(), device);
+        try (AutoCloseable ignored = AudioDeviceManagerTestSupport.install(
+                new Mixer.Info[]{info}, requested -> { throw new IllegalStateException("mixer missing"); },
+                requested -> true)) {
+            fallback.play(recording.toFile());
+            assertFalse(playerThread(fallback).isAlive());
+        }
+    }
+
     private AudioPlaybackProvider provider() {
         return new AudioPlaybackProvider() {
             @Override
@@ -350,6 +392,19 @@ class AudioPlayerIntegrationTest {
                         });
             }
         };
+    }
+
+    private Mixer mixer(Mixer.Info info, Clip clip) {
+        return (Mixer) Proxy.newProxyInstance(Mixer.class.getClassLoader(),
+                new Class<?>[]{Mixer.class}, (proxy, method, args) -> switch (method.getName()) {
+                    case "getLine" -> clip;
+                    case "getMixerInfo" -> info;
+                    case "getControls" -> new Control[0];
+                    case "isControlSupported", "isOpen", "isRunning", "isActive" -> false;
+                    case "hashCode" -> System.identityHashCode(proxy);
+                    case "equals" -> proxy == args[0];
+                    default -> null;
+                });
     }
 
     private File field(AudioPlayer player, String name) throws ReflectiveOperationException {

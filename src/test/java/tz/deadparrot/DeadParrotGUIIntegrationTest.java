@@ -7,9 +7,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import tz.deadparrot.utils.AudioDeviceManager;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
@@ -23,12 +25,14 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DeadParrotGUIIntegrationTest {
@@ -53,6 +57,9 @@ class DeadParrotGUIIntegrationTest {
     private final boolean originalEasterEgg = Settings.EASTER_EGG;
     private final String originalDesktopPath = Settings.OUTPUT_DESKTOP_FOLDER_PATH;
     private final String originalCustomPath = Settings.CUSTOM_RECORDINGS_DIRECTORY;
+    private final String originalInputDevice = Settings.SELECTED_INPUT_DEVICE;
+    private final String originalOutputDevice = Settings.SELECTED_OUTPUT_DEVICE;
+    private final String originalAudioFormat = Settings.SELECTED_AUDIO_FORMAT;
 
     @BeforeEach
     void prepareSettingsFile() throws Exception {
@@ -101,6 +108,9 @@ class DeadParrotGUIIntegrationTest {
         Settings.EASTER_EGG = originalEasterEgg;
         Settings.OUTPUT_DESKTOP_FOLDER_PATH = originalDesktopPath;
         Settings.CUSTOM_RECORDINGS_DIRECTORY = originalCustomPath;
+        Settings.SELECTED_INPUT_DEVICE = originalInputDevice;
+        Settings.SELECTED_OUTPUT_DEVICE = originalOutputDevice;
+        Settings.SELECTED_AUDIO_FORMAT = originalAudioFormat;
     }
 
     @Test
@@ -149,6 +159,7 @@ class DeadParrotGUIIntegrationTest {
         AtomicInteger playbackSettings = new AtomicInteger();
         AtomicInteger recordingSettings = new AtomicInteger();
         CountDownLatch probeFinished = new CountDownLatch(1);
+        CountDownLatch menuProbeFinished = new CountDownLatch(1);
         AtomicInteger probeCount = new AtomicInteger();
         AtomicInteger chooserCalls = new AtomicInteger();
         gui.directoryChooserFactory = () -> new JFileChooser() {
@@ -167,7 +178,9 @@ class DeadParrotGUIIntegrationTest {
         gui.openPlaybackSettings = playbackSettings::incrementAndGet;
         gui.openRecordingSettings = recordingSettings::incrementAndGet;
         gui.audioProbe = () -> {
-            probeCount.incrementAndGet();
+            if (probeCount.incrementAndGet() == 2) {
+                menuProbeFinished.countDown();
+            }
             probeFinished.countDown();
         };
 
@@ -199,10 +212,20 @@ class DeadParrotGUIIntegrationTest {
         assertTrue(probeFinished.await(2, TimeUnit.SECONDS));
         onEdt(() -> null);
 
+        onEdt(() -> {
+            setField(gui, "isRunning", true);
+            gui.getJMenuBar().getMenu(0).getItem(0).doClick();
+            setField(gui, "isRunning", false);
+            gui.getJMenuBar().getMenu(0).getItem(0).doClick();
+            return null;
+        });
+        assertTrue(menuProbeFinished.await(2, TimeUnit.SECONDS));
+        onEdt(() -> null);
+
         assertTrue(directoryOpens.get() == 1);
         assertTrue(playbackSettings.get() == 1);
         assertTrue(recordingSettings.get() == 1);
-        assertEquals(1, probeCount.get());
+        assertEquals(2, probeCount.get());
         assertTrue(Files.isDirectory(tempDir.resolve("Recordings")));
         assertTrue(((JTextArea) field(gui, "consoleOutput", false)).getText()
                 .contains("GUI test message"));
@@ -246,7 +269,78 @@ class DeadParrotGUIIntegrationTest {
             setField(gui, "isRunning", false);
             return null;
         });
-        assertEquals(1, probeCount.get());
+        assertEquals(2, probeCount.get());
+    }
+
+    @Test
+    void loadsSavedAudioSelectionsAndHandlesDefaultAndUnavailableFormats() throws Exception {
+        gui = onEdt(DeadParrotGUI::new);
+        javax.sound.sampled.Mixer.Info mixerInfo =
+                new javax.sound.sampled.Mixer.Info("Test", "Test", "Test mixer", "1") {};
+        AudioDeviceManager.AudioDevice input =
+                new AudioDeviceManager.AudioDevice("Microphone", mixerInfo);
+        AudioDeviceManager.AudioDevice output =
+                new AudioDeviceManager.AudioDevice("Speakers", mixerInfo);
+        javax.sound.sampled.AudioFormat firstFormat =
+                new javax.sound.sampled.AudioFormat(44100, 16, 1, true, false);
+        javax.sound.sampled.AudioFormat savedFormat =
+                new javax.sound.sampled.AudioFormat(48000, 24, 2, true, false);
+        gui.inputDevices = () -> List.of(input);
+        gui.outputDevices = () -> List.of(output);
+        gui.supportedAudioFormats = device -> List.of(firstFormat, savedFormat);
+        Settings.SELECTED_INPUT_DEVICE = "Microphone";
+        Settings.SELECTED_OUTPUT_DEVICE = "Speakers";
+        Settings.SELECTED_AUDIO_FORMAT = AudioDeviceManager.formatToString(savedFormat);
+
+        onEdt(() -> {
+            invoke(gui, "loadAudioDevices");
+            @SuppressWarnings("unchecked")
+            JComboBox<AudioDeviceManager.AudioDevice> inputs =
+                    (JComboBox<AudioDeviceManager.AudioDevice>) field(gui, "inputDeviceCombo", false);
+            @SuppressWarnings("unchecked")
+            JComboBox<AudioDeviceManager.AudioDevice> outputs =
+                    (JComboBox<AudioDeviceManager.AudioDevice>) field(gui, "outputDeviceCombo", false);
+            @SuppressWarnings("unchecked")
+            JComboBox<String> formats = (JComboBox<String>) field(gui, "audioFormatCombo", false);
+            assertEquals("Microphone", inputs.getSelectedItem().toString());
+            assertEquals("Speakers", outputs.getSelectedItem().toString());
+            assertEquals(AudioDeviceManager.formatToString(savedFormat), formats.getSelectedItem());
+
+            gui.supportedAudioFormats = device -> List.of();
+            invoke(gui, "refreshAudioFormatDropdown");
+            assertEquals("Default Format", formats.getSelectedItem());
+
+            gui.supportedAudioFormats = device -> List.of(firstFormat, savedFormat);
+            inputs.setSelectedIndex(0);
+            outputs.setSelectedIndex(0);
+            formats.setSelectedItem("Default Format");
+            assertNull(Settings.SELECTED_INPUT_DEVICE);
+            assertNull(Settings.SELECTED_OUTPUT_DEVICE);
+            assertNull(Settings.SELECTED_AUDIO_FORMAT);
+
+            inputs.setSelectedItem(input);
+            outputs.setSelectedItem(output);
+            formats.setSelectedItem(AudioDeviceManager.formatToString(firstFormat));
+            assertEquals("Microphone", Settings.SELECTED_INPUT_DEVICE);
+            assertEquals("Speakers", Settings.SELECTED_OUTPUT_DEVICE);
+            assertEquals(AudioDeviceManager.formatToString(firstFormat), Settings.SELECTED_AUDIO_FORMAT);
+
+            inputs.setSelectedItem(null);
+            outputs.setSelectedItem(null);
+            formats.setSelectedItem(null);
+            invoke(gui, "updateSettings");
+
+            Settings.SELECTED_INPUT_DEVICE = "Unavailable";
+            Settings.SELECTED_OUTPUT_DEVICE = "Unavailable";
+            Settings.SELECTED_AUDIO_FORMAT = null;
+            invoke(gui, "loadAudioDevices");
+            invoke(gui, "refreshAudioFormatDropdown");
+            setField(gui, "inputDeviceCombo", null);
+            setField(gui, "outputDeviceCombo", null);
+            setField(gui, "audioFormatCombo", null);
+            invoke(gui, "updateSettings");
+            return null;
+        });
     }
 
     @Test

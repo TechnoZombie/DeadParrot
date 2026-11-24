@@ -2,10 +2,16 @@ package tz.deadparrot;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import tz.deadparrot.utils.AudioDeviceManager;
+import tz.deadparrot.utils.AudioDeviceManagerTestSupport;
 
+import javax.sound.sampled.Control;
 import javax.sound.sampled.DataLine;
+import javax.sound.sampled.Line;
 import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
+import java.lang.reflect.Proxy;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.CountDownLatch;
@@ -133,6 +139,57 @@ class ListenerIntegrationTest {
         assertFalse(listenerThread.isAlive());
     }
 
+    @Test
+    void usesSelectedMixerAndFallsBackToTheDefaultInputProvider() throws Exception {
+        Mixer.Info info = new Mixer.Info("Input", "Test", "Test mixer", "1") {};
+        FakeTargetDataLine selectedLine =
+                new FakeTargetDataLine(Settings.DEFAULT_AUDIO_FORMAT, new byte[0], true);
+        AudioDeviceManager.AudioDevice device =
+                new AudioDeviceManager.AudioDevice("Input", info);
+        try (AutoCloseable ignored = AudioDeviceManagerTestSupport.install(
+                new Mixer.Info[]{info}, requested -> mixer(info, selectedLine), requested -> true)) {
+            Listener selectedListener = new Listener(new RecordingStub(() -> { }), device, null,
+                    provider(new FakeTargetDataLine(Settings.DEFAULT_AUDIO_FORMAT, new byte[0]), true));
+            Thread selectedThread = new Thread(selectedListener);
+            selectedThread.start();
+            waitForLineOpen(selectedLine);
+            selectedListener.shutdown();
+            selectedThread.join(2000);
+            assertFalse(selectedThread.isAlive());
+            assertFalse(selectedLine.isOpen());
+        }
+
+        FakeTargetDataLine fallbackLine =
+                new FakeTargetDataLine(Settings.DEFAULT_AUDIO_FORMAT, new byte[0], true);
+        try (AutoCloseable ignored = AudioDeviceManagerTestSupport.install(
+                new Mixer.Info[]{info}, requested -> { throw new IllegalStateException("mixer missing"); },
+                requested -> true)) {
+            Listener fallbackListener = new Listener(new RecordingStub(() -> { }), device, null,
+                    provider(fallbackLine, true));
+            Thread fallbackThread = new Thread(fallbackListener);
+            fallbackThread.start();
+            waitForLineOpen(fallbackLine);
+            fallbackListener.shutdown();
+            fallbackThread.join(2000);
+            assertFalse(fallbackThread.isAlive());
+            assertFalse(fallbackLine.isOpen());
+        }
+    }
+
+    @Test
+    void selectedDeviceWithoutMixerInfoUsesDefaultProvider() throws Exception {
+        FakeTargetDataLine line =
+                new FakeTargetDataLine(Settings.DEFAULT_AUDIO_FORMAT, new byte[0], true);
+        Listener listener = new Listener(new RecordingStub(() -> { }),
+                new AudioDeviceManager.AudioDevice("Default", null), null, provider(line, true));
+        Thread listenerThread = new Thread(listener);
+        listenerThread.start();
+        waitForLineOpen(line);
+        listener.shutdown();
+        listenerThread.join(2000);
+        assertFalse(listenerThread.isAlive());
+    }
+
     private AudioInputProvider provider(TargetDataLine line, boolean supported) {
         return new AudioInputProvider() {
             @Override
@@ -145,6 +202,20 @@ class ListenerIntegrationTest {
                 return line;
             }
         };
+    }
+
+    private Mixer mixer(Mixer.Info info, TargetDataLine line) {
+        return (Mixer) Proxy.newProxyInstance(Mixer.class.getClassLoader(),
+                new Class<?>[]{Mixer.class}, (proxy, method, args) -> switch (method.getName()) {
+                    case "getLine" -> line;
+                    case "isLineSupported" -> true;
+                    case "getMixerInfo" -> info;
+                    case "getControls" -> new Control[0];
+                    case "isControlSupported", "isOpen", "isRunning", "isActive" -> false;
+                    case "hashCode" -> System.identityHashCode(proxy);
+                    case "equals" -> proxy == args[0];
+                    default -> null;
+                });
     }
 
     private void waitForLineOpen(FakeTargetDataLine line) throws InterruptedException {

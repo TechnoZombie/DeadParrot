@@ -3,12 +3,17 @@ package tz.deadparrot;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import tz.deadparrot.utils.AudioDeviceManager;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
+import javax.sound.sampled.SourceDataLine;
+import javax.sound.sampled.Line;
+import javax.sound.sampled.Control;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,6 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.lang.reflect.Proxy;
+import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AudioRecorderIntegrationTest {
@@ -36,6 +44,8 @@ class AudioRecorderIntegrationTest {
     private final String originalDesktopPath = Settings.OUTPUT_DESKTOP_FOLDER_PATH;
     private final boolean originalCustomSave = Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR;
     private final String originalCustomPath = Settings.CUSTOM_RECORDINGS_DIRECTORY;
+    private final String originalInputDevice = Settings.SELECTED_INPUT_DEVICE;
+    private final String originalOutputDevice = Settings.SELECTED_OUTPUT_DEVICE;
 
     @AfterEach
     void restoreSettings() {
@@ -45,6 +55,8 @@ class AudioRecorderIntegrationTest {
         Settings.OUTPUT_DESKTOP_FOLDER_PATH = originalDesktopPath;
         Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR = originalCustomSave;
         Settings.CUSTOM_RECORDINGS_DIRECTORY = originalCustomPath;
+        Settings.SELECTED_INPUT_DEVICE = originalInputDevice;
+        Settings.SELECTED_OUTPUT_DEVICE = originalOutputDevice;
     }
 
     @Test
@@ -68,6 +80,40 @@ class AudioRecorderIntegrationTest {
             Files.deleteIfExists(recording.toPath());
         }
         assertFalse(line.isRunning());
+    }
+
+    @Test
+    void stopsAStillOpenRecordingAtItsConfiguredMaximumDuration() throws Exception {
+        Settings.SPY_MODE = true;
+        Settings.KEEP_RECORDINGS = true;
+        Settings.SAVE_RECORDINGS_TO_DESKTOP = true;
+        Settings.OUTPUT_DESKTOP_FOLDER_PATH = tempDir + File.separator;
+        FakeTargetDataLine line =
+                new FakeTargetDataLine(Settings.DEFAULT_AUDIO_FORMAT, new byte[0], true);
+        AudioRecorder recorder = new AudioRecorder(inputProvider(line), 1500, 0);
+
+        recorder.record();
+
+        assertTrue(recorder.outputFile.exists());
+        assertFalse(line.isRunning());
+        Files.deleteIfExists(recorder.outputFile.toPath());
+    }
+
+    @Test
+    void stopsRecordingWhenSilenceIsDetectedByTheReaderThread() throws Exception {
+        Settings.SPY_MODE = true;
+        Settings.KEEP_RECORDINGS = true;
+        Settings.SAVE_RECORDINGS_TO_DESKTOP = true;
+        Settings.OUTPUT_DESKTOP_FOLDER_PATH = tempDir + File.separator;
+        FakeTargetDataLine line =
+                new FakeTargetDataLine(Settings.DEFAULT_AUDIO_FORMAT, new byte[4096]);
+        AudioRecorder recorder = new AudioRecorder(inputProvider(line), 0, 10000);
+
+        recorder.record();
+
+        assertTrue(recorder.outputFile.exists());
+        assertFalse(line.isRunning());
+        Files.deleteIfExists(recorder.outputFile.toPath());
     }
 
     @Test
@@ -147,6 +193,63 @@ class AudioRecorderIntegrationTest {
         recorder.delete();
 
         assertTrue(Files.exists(recording));
+    }
+
+    @Test
+    void usesSelectedMixerAndAudioFormatAndFallsBackWhenMixerLookupFails() throws Exception {
+        javax.sound.sampled.AudioFormat selectedFormat =
+                new javax.sound.sampled.AudioFormat(48000, 24, 2, true, false);
+        Mixer.Info mixerInfo = new Mixer.Info("Duplex", "Test", "Test mixer", "1") {};
+        FakeTargetDataLine selectedLine = new FakeTargetDataLine(selectedFormat, new byte[0]);
+        Mixer mixer = mixer(mixerInfo, selectedLine);
+        AudioDeviceManager.AudioDevice device =
+                new AudioDeviceManager.AudioDevice("Duplex", mixerInfo);
+        Settings.SELECTED_OUTPUT_DEVICE = "Duplex";
+
+        try (AutoCloseable ignored = tz.deadparrot.utils.AudioDeviceManagerTestSupport.install(
+                new Mixer.Info[]{mixerInfo}, info -> mixer, info -> true)) {
+            AudioRecorder recorder = new AudioRecorder(inputProvider(selectedLine), device, selectedFormat);
+            assertSame(selectedLine, recorder.recorderLine);
+            assertEquals(selectedFormat, recorder.dataInfo.getFormats()[0]);
+            assertEquals("Duplex", outputDevice(recorder.audioPlayer).getName());
+
+            FakeTargetDataLine fallbackLine =
+                    new FakeTargetDataLine(Settings.DEFAULT_AUDIO_FORMAT, new byte[0]);
+            AudioDeviceManager.AudioDevice unavailable =
+                    new AudioDeviceManager.AudioDevice("Missing", mixerInfo);
+            try (AutoCloseable ignoredLookup = tz.deadparrot.utils.AudioDeviceManagerTestSupport.install(
+                    new Mixer.Info[]{mixerInfo}, info -> { throw new IllegalStateException("mixer gone"); },
+                    info -> true)) {
+                AudioRecorder fallback = new AudioRecorder(inputProvider(fallbackLine), unavailable, null);
+                assertSame(fallbackLine, fallback.recorderLine);
+                assertEquals(Settings.DEFAULT_AUDIO_FORMAT, fallback.dataInfo.getFormats()[0]);
+            }
+        }
+    }
+
+    private Mixer mixer(Mixer.Info info, TargetDataLine targetLine) {
+        return (Mixer) Proxy.newProxyInstance(Mixer.class.getClassLoader(),
+                new Class<?>[]{Mixer.class}, (proxy, method, args) -> switch (method.getName()) {
+                    case "getTargetLineInfo" ->
+                            new Line.Info[]{new DataLine.Info(TargetDataLine.class, (javax.sound.sampled.AudioFormat) null)};
+                    case "getSourceLineInfo" ->
+                            new Line.Info[]{new DataLine.Info(SourceDataLine.class, (javax.sound.sampled.AudioFormat) null)};
+                    case "getLine" -> targetLine;
+                    case "isLineSupported" -> true;
+                    case "getMixerInfo" -> info;
+                    case "getControls" -> new Control[0];
+                    case "isControlSupported", "isOpen", "isRunning", "isActive" -> false;
+                    case "hashCode" -> System.identityHashCode(proxy);
+                    case "equals" -> proxy == args[0];
+                    default -> null;
+                });
+    }
+
+    private AudioDeviceManager.AudioDevice outputDevice(AudioPlayer player)
+            throws ReflectiveOperationException {
+        Field field = AudioPlayer.class.getDeclaredField("outputDevice");
+        field.setAccessible(true);
+        return (AudioDeviceManager.AudioDevice) field.get(player);
     }
 
     @Test

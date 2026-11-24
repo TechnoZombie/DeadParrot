@@ -11,6 +11,7 @@ import java.util.*;
  */
 @Slf4j
 public class AudioDeviceManager {
+    static AudioDeviceProvider audioDeviceProvider = AudioDeviceProvider.SYSTEM;
 
     /**
      * Represents an audio device with its name and mixer info
@@ -43,11 +44,11 @@ public class AudioDeviceManager {
      */
     public static List<AudioDevice> getInputDevices() {
         List<AudioDevice> inputDevices = new ArrayList<>();
-        Mixer.Info[] mixers = AudioSystem.getMixerInfo();
+        Mixer.Info[] mixers = audioDeviceProvider.getMixerInfo();
 
         for (Mixer.Info mixerInfo : mixers) {
             try {
-                Mixer mixer = AudioSystem.getMixer(mixerInfo);
+                Mixer mixer = audioDeviceProvider.getMixer(mixerInfo);
                 Line.Info[] lineInfos = mixer.getTargetLineInfo();
 
                 if (lineInfos.length > 0) {
@@ -75,11 +76,11 @@ public class AudioDeviceManager {
      */
     public static List<AudioDevice> getOutputDevices() {
         List<AudioDevice> outputDevices = new ArrayList<>();
-        Mixer.Info[] mixers = AudioSystem.getMixerInfo();
+        Mixer.Info[] mixers = audioDeviceProvider.getMixerInfo();
 
         for (Mixer.Info mixerInfo : mixers) {
             try {
-                Mixer mixer = AudioSystem.getMixer(mixerInfo);
+                Mixer mixer = audioDeviceProvider.getMixer(mixerInfo);
                 Line.Info[] lineInfos = mixer.getSourceLineInfo();
 
                 if (lineInfos.length > 0) {
@@ -126,7 +127,7 @@ public class AudioDeviceManager {
         List<AudioFormat> supportedFormats = new ArrayList<>();
 
         try {
-            Mixer mixer = AudioSystem.getMixer(device.getMixerInfo());
+            Mixer mixer = audioDeviceProvider.getMixer(device.getMixerInfo());
             Line.Info[] lineInfos = mixer.getTargetLineInfo();
 
             for (Line.Info lineInfo : lineInfos) {
@@ -139,7 +140,7 @@ public class AudioDeviceManager {
                     for (AudioFormat format : getCommonFormats()) {
                         try {
                             DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
-                            if (AudioSystem.isLineSupported(info)) {
+                            if (audioDeviceProvider.isLineSupported(info)) {
                                 line.open(format);
                                 supportedFormats.add(format);
                                 line.close();
@@ -170,6 +171,10 @@ public class AudioDeviceManager {
                 format.getChannels());
     }
 
+    public static Mixer getMixer(Mixer.Info info) {
+        return audioDeviceProvider.getMixer(info);
+    }
+
     /**
      * Find device by name
      */
@@ -196,4 +201,3 @@ public class AudioDeviceManager {
         return devices.isEmpty() ? null : devices.get(0);
     }
 }
-

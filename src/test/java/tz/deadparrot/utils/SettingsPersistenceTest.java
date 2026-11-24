@@ -27,6 +27,9 @@ class SettingsPersistenceTest {
     private final boolean originalSaveToDesktop = Settings.SAVE_RECORDINGS_TO_DESKTOP;
     private final boolean originalSaveToCustom = Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR;
     private final boolean originalEasterEgg = Settings.EASTER_EGG;
+    private final String originalInputDevice = Settings.SELECTED_INPUT_DEVICE;
+    private final String originalOutputDevice = Settings.SELECTED_OUTPUT_DEVICE;
+    private final String originalAudioFormat = Settings.SELECTED_AUDIO_FORMAT;
 
     @AfterEach
     void restoreSettings() {
@@ -39,6 +42,9 @@ class SettingsPersistenceTest {
         Settings.SAVE_RECORDINGS_TO_DESKTOP = originalSaveToDesktop;
         Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR = originalSaveToCustom;
         Settings.EASTER_EGG = originalEasterEgg;
+        Settings.SELECTED_INPUT_DEVICE = originalInputDevice;
+        Settings.SELECTED_OUTPUT_DEVICE = originalOutputDevice;
+        Settings.SELECTED_AUDIO_FORMAT = originalAudioFormat;
     }
 
     @Test
@@ -52,9 +58,19 @@ class SettingsPersistenceTest {
         Settings.SAVE_RECORDINGS_TO_DESKTOP = false;
         Settings.SAVE_RECORDINGS_TO_CUSTOM_DIR = true;
         Settings.EASTER_EGG = true;
+        Settings.SELECTED_INPUT_DEVICE = "Microphone";
+        Settings.SELECTED_OUTPUT_DEVICE = "Speakers";
+        Settings.SELECTED_AUDIO_FORMAT = "48000 Hz, 24-bit, 2 ch";
 
         Path settingsFile = tempDir.resolve("deadparrot.settings");
         SettingsPersistence.saveSettings(settingsFile);
+        Properties saved = new Properties();
+        try (var input = Files.newInputStream(settingsFile)) {
+            saved.load(input);
+        }
+        assertTrue(saved.containsKey("selectedInputDevice"));
+        assertTrue(saved.containsKey("selectedOutputDevice"));
+        assertTrue(saved.containsKey("selectedAudioFormat"));
 
         Settings.SPY_MODE = false;
         Settings.MARKER_MODE = false;

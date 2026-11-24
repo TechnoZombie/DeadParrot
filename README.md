@@ -81,18 +81,6 @@ This project mimics the behavior of a repeater station by automatically handling
 - **`ListInputDevices.java`** – Lists available audio input devices.
 - **`AudioLevelAnalyzer.java`** – Pure audio-sample analysis used by the listener and recorder.
 
-## 🧪 Tests
-
-Run the test suite with `mvn test`. To enforce the core-logic coverage target, run
-`mvn verify`; JaCoCo requires at least 99% line coverage across
-`AudioLevelAnalyzer`, `AudioResourcesPreloader`, and `WaveWriterUtil`. A full coverage report is generated at
-`target/site/jacoco/index.html`.
-
-The coverage gate focuses on deterministic logic that can be tested without audio
-devices, an operating-system desktop, or a graphical display. The report still
-includes the rest of the application, whose hardware and UI integration requires
-separate environment-dependent tests.
-
 ## 🎯 Features
 
 - 🎙️ **Sound Detection** – Begins recording only when sound is detected via threshold analysis.
@@ -141,10 +129,11 @@ separate environment-dependent tests.
 ## 🧪 Tests
 
 Run the test suite with `mvn test`. Run `mvn verify` to enforce at least 99%
-line and branch coverage across the full production project. Audio devices and OS integrations
-are tested using simulated devices and injectable process launchers. Swing
-integration tests exercise the UI in a graphical environment without requiring
-real audio hardware. The JaCoCo report is generated at `target/site/jacoco/index.html`.
+line and branch coverage across all production classes. Audio devices and OS
+integrations are tested using simulated devices and injectable process launchers.
+Swing integration tests exercise the UI in a graphical environment without
+requiring real audio hardware. The JaCoCo report is generated at
+`target/site/jacoco/index.html`.
 
 ```
 ---

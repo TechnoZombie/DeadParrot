@@ -33,13 +33,12 @@ public class Listener extends Thread {
     Listener(AudioRecorder recorder, AudioDeviceManager.AudioDevice inputDevice, AudioFormat audioFormat, AudioInputProvider audioInputProvider) {
         this.recorder = recorder;
         this.inputDevice = inputDevice;
-        this.audioFormat = audioFormat != null ? audioFormat : Settings.AUDIO_FORMAT;
+        this.audioFormat = audioFormat != null ? audioFormat : Settings.DEFAULT_AUDIO_FORMAT;
         this.audioInputProvider = audioInputProvider;
     }
 
     @Override
     public void run() {
-        AudioFormat format = Settings.AUDIO_FORMAT;
         while (keepAlive) {
             try {
                 DataLine.Info info = new DataLine.Info(TargetDataLine.class, audioFormat);
@@ -50,7 +49,7 @@ public class Listener extends Thread {
 
                 if (inputDevice != null && inputDevice.getMixerInfo() != null) {
                     try {
-                        Mixer mixer = AudioSystem.getMixer(inputDevice.getMixerInfo());
+                        Mixer mixer = AudioDeviceManager.getMixer(inputDevice.getMixerInfo());
                         line = (TargetDataLine) mixer.getLine(info);
                     } catch (Exception e) {
                         log.warn("Failed to use selected input device for listener, falling back to default: " + e.getMessage());

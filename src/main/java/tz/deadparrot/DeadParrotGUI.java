@@ -11,7 +11,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.List;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
@@ -87,6 +89,10 @@ public class DeadParrotGUI extends JFrame {
     Runnable openDirectory = FileUtils::openDestinationFolder;
     Runnable openPlaybackSettings = SoundSettingsOpener::openPlaybackSettings;
     Runnable openRecordingSettings = SoundSettingsOpener::openRecordingSettings;
+    Supplier<List<AudioDeviceManager.AudioDevice>> inputDevices = AudioDeviceManager::getInputDevices;
+    Supplier<List<AudioDeviceManager.AudioDevice>> outputDevices = AudioDeviceManager::getOutputDevices;
+    Function<AudioDeviceManager.AudioDevice, List<AudioFormat>> supportedAudioFormats =
+            AudioDeviceManager::getSupportedFormatsForInputDevice;
     IntSupplier exitConfirmation = () -> JOptionPane.showConfirmDialog(this,
             "Repeater is still running. Stop it before exiting?", "Confirm Exit",
             JOptionPane.YES_NO_CANCEL_OPTION);
@@ -181,7 +187,7 @@ public class DeadParrotGUI extends JFrame {
 
             new Thread(() -> {
                 try {
-                    AudioFormatProbe.probeAudioFormats();
+                    audioProbe.run();
                     log.info(GUILabels.LOG_AUDIO_PROBE_COMPLETED);
                 } finally {
                     SwingUtilities.invokeLater(() -> runAudioProbeItem.setEnabled(true));
@@ -556,18 +562,18 @@ public class DeadParrotGUI extends JFrame {
         updatingUI = true;
         try {
             // Load input devices
-            java.util.List<AudioDeviceManager.AudioDevice> inputDevices = AudioDeviceManager.getInputDevices();
+            List<AudioDeviceManager.AudioDevice> availableInputDevices = inputDevices.get();
             inputDeviceCombo.removeAllItems();
             inputDeviceCombo.addItem(new AudioDeviceManager.AudioDevice("Default", null));
-            for (AudioDeviceManager.AudioDevice device : inputDevices) {
+            for (AudioDeviceManager.AudioDevice device : availableInputDevices) {
                 inputDeviceCombo.addItem(device);
             }
 
             // Load output devices
-            java.util.List<AudioDeviceManager.AudioDevice> outputDevices = AudioDeviceManager.getOutputDevices();
+            List<AudioDeviceManager.AudioDevice> availableOutputDevices = outputDevices.get();
             outputDeviceCombo.removeAllItems();
             outputDeviceCombo.addItem(new AudioDeviceManager.AudioDevice("Default", null));
-            for (AudioDeviceManager.AudioDevice device : outputDevices) {
+            for (AudioDeviceManager.AudioDevice device : availableOutputDevices) {
                 outputDeviceCombo.addItem(device);
             }
 
@@ -609,7 +615,7 @@ public class DeadParrotGUI extends JFrame {
 
             if (selectedDevice != null && selectedDevice.getMixerInfo() != null) {
                 // Get formats for selected device
-                java.util.List<AudioFormat> formats = AudioDeviceManager.getSupportedFormatsForInputDevice(selectedDevice);
+                List<AudioFormat> formats = supportedAudioFormats.apply(selectedDevice);
                 if (!formats.isEmpty()) {
                     for (AudioFormat format : formats) {
                         audioFormatCombo.addItem(AudioDeviceManager.formatToString(format));
@@ -630,7 +636,7 @@ public class DeadParrotGUI extends JFrame {
                         break;
                     }
                 }
-            } else if (audioFormatCombo.getItemCount() > 0) {
+            } else {
                 audioFormatCombo.setSelectedIndex(0);
             }
         } finally {

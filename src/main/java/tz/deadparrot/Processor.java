@@ -2,24 +2,37 @@ package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
 import tz.deadparrot.utils.AudioResourcesPreloader;
+import tz.deadparrot.utils.AudioDeviceManager;
 import tz.deadparrot.utils.FileUtils;
 import tz.deadparrot.utils.SoundSettingsOpener;
 import tz.deadparrot.utils.SystemUtils;
 import tz.deadparrot.utils.Printer;
 import tz.deadparrot.utils.ParrotQuotes;
 
+import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.BiFunction;
 
 @Slf4j
 public class Processor {
+    @FunctionalInterface
+    interface ConfiguredListenerFactory {
+        Listener create(AudioRecorder recorder, AudioDeviceManager.AudioDevice device,
+                        AudioFormat format);
+    }
+
     private AudioRecorder audioRecorder;
     private Listener listener;
     private Supplier<AudioRecorder> recorderFactory =
             () -> createAudioRecorder(AudioInputProvider.SYSTEM);
     private Function<AudioRecorder, Listener> listenerFactory = Listener::new;
+    BiFunction<AudioDeviceManager.AudioDevice, AudioFormat, AudioRecorder> configuredRecorderFactory =
+            this::createConfiguredAudioRecorder;
+    ConfiguredListenerFactory configuredListenerFactory =
+            Listener::new;
     private Supplier<AudioMarker> markerFactory = AudioMarker::new;
     private Supplier<AudioResourcesPreloader> preloaderFactory = AudioResourcesPreloader::new;
     Thread shutdownHook;
@@ -61,7 +74,7 @@ public class Processor {
 
         if (Settings.MARKER_MODE) {
             markerFactory.get().runMarkerMode(this);
-        } else if (!Settings.SPY_MODE && !Settings.MARKER_MODE) {
+        } else if (!Settings.SPY_MODE) {
             log.info(Constants.RUNNING_IN_STANDARD_MODE);
         }
 
@@ -99,19 +112,13 @@ public class Processor {
             }
 
             if (inputDevice != null || selectedFormat != null) {
-                audioRecorder = new AudioRecorder(inputDevice, selectedFormat);
-                listener = new Listener(audioRecorder, inputDevice, selectedFormat);
+                audioRecorder = configuredRecorderFactory.apply(inputDevice, selectedFormat);
+                listener = configuredListenerFactory.create(audioRecorder, inputDevice, selectedFormat);
                 listener.start();
             } else {
                 audioRecorder = recorderFactory.get();
             }
-        } catch (LineUnavailableException e) {
-            log.error(Constants.LINE_UNAVAILABLE, e);
-            throw new RuntimeException(e);
         } catch (RuntimeException e) {
-            log.error(Constants.LINE_UNAVAILABLE, e);
-            throw e;
-        }
             log.error(Constants.LINE_UNAVAILABLE, e);
             throw e;
         }
@@ -125,6 +132,15 @@ public class Processor {
     static AudioRecorder createAudioRecorder(AudioInputProvider audioInputProvider) {
         try {
             return new AudioRecorder(audioInputProvider);
+        } catch (LineUnavailableException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private AudioRecorder createConfiguredAudioRecorder(AudioDeviceManager.AudioDevice inputDevice,
+                                                        AudioFormat audioFormat) {
+        try {
+            return new AudioRecorder(inputDevice, audioFormat);
         } catch (LineUnavailableException e) {
             throw new RuntimeException(e);
         }

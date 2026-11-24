@@ -1,6 +1,7 @@
 package tz.deadparrot;
 
 import lombok.extern.slf4j.Slf4j;
+import tz.deadparrot.utils.AudioDeviceManager;
 import tz.deadparrot.utils.AudioResourcesPreloader;
 
 import javax.sound.sampled.*;
@@ -26,6 +27,11 @@ public class AudioPlayer {
 
     AudioPlayer(AudioPlaybackProvider playbackProvider) {
         this(playbackProvider, AudioResourcesPreloader::new, null);
+    }
+
+    AudioPlayer(AudioPlaybackProvider playbackProvider,
+                AudioDeviceManager.AudioDevice outputDevice) {
+        this(playbackProvider, AudioResourcesPreloader::new, outputDevice);
     }
 
     AudioPlayer(AudioPlaybackProvider playbackProvider,
@@ -64,7 +70,7 @@ public class AudioPlayer {
                     Clip clip;
                     if (outputDevice != null) {
                         try {
-                            Mixer mixer = AudioSystem.getMixer(outputDevice.getMixerInfo());
+                            Mixer mixer = AudioDeviceManager.getMixer(outputDevice.getMixerInfo());
                             clip = (Clip) mixer.getLine(new DataLine.Info(Clip.class, null));
                             log.info("Using selected output device: " + outputDevice.getName());
                         } catch (Exception e) {

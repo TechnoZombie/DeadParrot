@@ -23,6 +23,8 @@ public class Settings {
      */
     public static final AudioFormat DEFAULT_AUDIO_FORMAT = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
             44100, 16, 2, 4, 44100, false);
+    @Deprecated
+    public static final AudioFormat AUDIO_FORMAT = DEFAULT_AUDIO_FORMAT;
 
     // Audio Device Selection
     /**

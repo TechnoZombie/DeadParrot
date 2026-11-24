@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 public class AudioRecorder {
-    DataLine.Info dataInfo = new DataLine.Info(TargetDataLine.class, Settings.AUDIO_FORMAT);
+    DataLine.Info dataInfo = new DataLine.Info(TargetDataLine.class, Settings.DEFAULT_AUDIO_FORMAT);
     TargetDataLine recorderLine;
     AudioInputStream recordingStream;
     AudioPlayer audioPlayer = new AudioPlayer();
@@ -21,6 +21,7 @@ public class AudioRecorder {
     WaveWriterUtil waveWriterUtil = new WaveWriterUtil();
     private final int silenceDurationMs;
     private final int maxRecordingTimeMs;
+    private final AudioFormat selectedAudioFormat;
 
     public AudioRecorder() throws LineUnavailableException {
         this(AudioInputProvider.SYSTEM);
@@ -30,16 +31,25 @@ public class AudioRecorder {
         this(AudioInputProvider.SYSTEM, inputDevice, audioFormat);
     }
 
+    AudioRecorder(AudioInputProvider audioInputProvider,
+                  AudioDeviceManager.AudioDevice inputDevice,
+                  AudioFormat audioFormat) throws LineUnavailableException {
+        this(audioInputProvider, inputDevice, audioFormat,
+                Settings.SILENCE_DURATION_MS, Settings.MAX_RECORDING_TIME_MS);
+    }
+
     AudioRecorder(AudioInputProvider audioInputProvider) throws LineUnavailableException {
-        this(audioInputProvider, null, null);
+        this(audioInputProvider, null, null, Settings.SILENCE_DURATION_MS, Settings.MAX_RECORDING_TIME_MS);
     }
 
     private AudioRecorder(AudioInputProvider audioInputProvider,
                           AudioDeviceManager.AudioDevice inputDevice,
-                          AudioFormat audioFormat) throws LineUnavailableException {
-        this.selectedAudioFormat = audioFormat != null ? audioFormat : Settings.AUDIO_FORMAT;
-        this.silenceDurationMs = Settings.SILENCE_DURATION_MS;
-        this.maxRecordingTimeMs = Settings.MAX_RECORDING_TIME_MS;
+                          AudioFormat audioFormat,
+                          int silenceDurationMs,
+                          int maxRecordingTimeMs) throws LineUnavailableException {
+        this.selectedAudioFormat = audioFormat != null ? audioFormat : Settings.DEFAULT_AUDIO_FORMAT;
+        this.silenceDurationMs = silenceDurationMs;
+        this.maxRecordingTimeMs = maxRecordingTimeMs;
 
         AudioDeviceManager.AudioDevice outputDevice = null;
         if (Settings.SELECTED_OUTPUT_DEVICE != null) {
@@ -48,10 +58,21 @@ public class AudioRecorder {
         }
         this.audioPlayer = new AudioPlayer(outputDevice);
 
-        Mixer selectedMixer = null;
+        AudioInputProvider selectedInputProvider = audioInputProvider;
         if (inputDevice != null) {
             try {
-                selectedMixer = AudioSystem.getMixer(inputDevice.getMixerInfo());
+                Mixer selectedMixer = AudioDeviceManager.getMixer(inputDevice.getMixerInfo());
+                selectedInputProvider = new AudioInputProvider() {
+                    @Override
+                    public boolean isLineSupported(DataLine.Info lineInfo) {
+                        return selectedMixer.isLineSupported(lineInfo);
+                    }
+
+                    @Override
+                    public TargetDataLine getLine(DataLine.Info lineInfo) throws LineUnavailableException {
+                        return (TargetDataLine) selectedMixer.getLine(lineInfo);
+                    }
+                };
                 log.info("Using selected input device: " + inputDevice.getName());
             } catch (Exception e) {
                 log.warn("Failed to open selected input device, falling back to default: " + e.getMessage());
@@ -59,30 +80,18 @@ public class AudioRecorder {
         }
 
         dataInfo = new DataLine.Info(TargetDataLine.class, selectedAudioFormat);
-        if (!audioInputProvider.isLineSupported(dataInfo)) {
+        if (!selectedInputProvider.isLineSupported(dataInfo)) {
             log.error(Constants.LINE_NOT_SUPPORTED);
         }
 
-        recorderLine = audioInputProvider.getLine(dataInfo);
+        recorderLine = selectedInputProvider.getLine(dataInfo);
         recordingStream = new AudioInputStream(recorderLine);
         log.info(Constants.LINE_IN_READY);
-    }
-
-    AudioRecorder(AudioInputProvider audioInputProvider) throws LineUnavailableException {
-        this(audioInputProvider, Settings.SILENCE_DURATION_MS, Settings.MAX_RECORDING_TIME_MS);
     }
 
     AudioRecorder(AudioInputProvider audioInputProvider, int silenceDurationMs,
                   int maxRecordingTimeMs) throws LineUnavailableException {
-        this.silenceDurationMs = silenceDurationMs;
-        this.maxRecordingTimeMs = maxRecordingTimeMs;
-        if (!audioInputProvider.isLineSupported(dataInfo)) {
-            log.error(Constants.LINE_NOT_SUPPORTED);
-        }
-
-        recorderLine = audioInputProvider.getLine(dataInfo);
-        recordingStream = new AudioInputStream(recorderLine);
-        log.info(Constants.LINE_IN_READY);
+        this(audioInputProvider, null, null, silenceDurationMs, maxRecordingTimeMs);
     }
 
     public void record() throws LineUnavailableException {

@@ -4,17 +4,26 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tz.deadparrot.utils.AudioResourcesPreloader;
+import tz.deadparrot.utils.AudioDeviceManagerTestSupport;
 
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.Control;
 import javax.sound.sampled.DataLine;
+import javax.sound.sampled.Line;
 import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.lang.reflect.Proxy;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -35,6 +44,9 @@ class ProcessorIntegrationTest {
     private final String originalOsName = System.getProperty("os.name");
     private final boolean originalWindows = Constants.IS_WINDOWS;
     private final boolean originalLinux = Constants.IS_LINUX;
+    private final String originalSelectedInput = Settings.SELECTED_INPUT_DEVICE;
+    private final String originalSelectedOutput = Settings.SELECTED_OUTPUT_DEVICE;
+    private final String originalSelectedFormat = Settings.SELECTED_AUDIO_FORMAT;
 
     @AfterEach
     void restoreSettings() {
@@ -50,6 +62,9 @@ class ProcessorIntegrationTest {
         System.setProperty("os.name", originalOsName);
         Constants.IS_WINDOWS = originalWindows;
         Constants.IS_LINUX = originalLinux;
+        Settings.SELECTED_INPUT_DEVICE = originalSelectedInput;
+        Settings.SELECTED_OUTPUT_DEVICE = originalSelectedOutput;
+        Settings.SELECTED_AUDIO_FORMAT = originalSelectedFormat;
     }
 
     @Test
@@ -192,6 +207,76 @@ class ProcessorIntegrationTest {
     }
 
     @Test
+    void initializesSelectedAudioDeviceAndParsesConfiguredFormats() throws Exception {
+        configureStandardMode();
+        Mixer.Info info = new Mixer.Info("Microphone", "Test", "Test mixer", "1") {};
+        Mixer mixer = mixer(info);
+        Settings.SELECTED_INPUT_DEVICE = "Microphone";
+        Settings.SELECTED_AUDIO_FORMAT = "48000 Hz, 24-bit, 2 ch";
+
+        try (AutoCloseable ignored = AudioDeviceManagerTestSupport.install(
+                new Mixer.Info[]{info}, requested -> mixer, requested -> true)) {
+            Processor processor = new Processor();
+            invokeInitialize(processor);
+            processor.shutdown();
+        }
+    }
+
+    @Test
+    void ignoresUnavailableSelectedDeviceAndMalformedAudioFormat() throws Exception {
+        configureStandardMode();
+        Settings.SELECTED_INPUT_DEVICE = "Missing";
+        Settings.SELECTED_AUDIO_FORMAT = "not-a-format";
+        AtomicBoolean recorderCreated = new AtomicBoolean();
+        Processor processor = new Processor(
+                () -> {
+                    recorderCreated.set(true);
+                    return createRecorder(new FakeTargetDataLine(Settings.DEFAULT_AUDIO_FORMAT, new byte[0]));
+                },
+                recorder -> new Listener(recorder, inputProvider(
+                        new FakeTargetDataLine(Settings.DEFAULT_AUDIO_FORMAT, new byte[0]))) {
+                    @Override public void run() { }
+                },
+                AudioMarker::new,
+                AudioResourcesPreloader::new);
+        try (AutoCloseable ignored = AudioDeviceManagerTestSupport.install(
+                new Mixer.Info[0], info -> { throw new IllegalArgumentException("missing"); },
+                info -> false)) {
+            invokeInitialize(processor);
+            assertTrue(recorderCreated.get());
+            processor.shutdown();
+        }
+    }
+
+    @Test
+    void parserReturnsNullForIncompleteAndInvalidFormats() throws Exception {
+        Processor processor = new Processor();
+        assertNotNull(parseAudioFormat(processor, "44100 Hz, 16-bit, 1 ch"));
+        assertNull(parseAudioFormat(processor, "invalid"));
+        assertNull(parseAudioFormat(processor, "44100 Hz, bad-bit, 1 ch"));
+    }
+
+    @Test
+    void initializesUsingOnlyAConfiguredAudioFormat() throws Exception {
+        configureStandardMode();
+        Settings.SELECTED_INPUT_DEVICE = null;
+        Settings.SELECTED_AUDIO_FORMAT = "48000 Hz, 24-bit, 2 ch";
+        Processor processor = new Processor();
+        processor.configuredRecorderFactory = (device, format) -> {
+            assertNull(device);
+            assertEquals(48000f, format.getSampleRate(), 0.01f);
+            return createRecorder(new FakeTargetDataLine(format, new byte[0]));
+        };
+        processor.configuredListenerFactory = (recorder, device, format) ->
+                new Listener(recorder, inputProvider(new FakeTargetDataLine(format, new byte[0]))) {
+                    @Override public void run() { }
+                };
+
+        invokeInitialize(processor);
+        processor.shutdown();
+    }
+
+    @Test
     void appliesDefaultRecordingDirectoryAndOpensNoOsDialogWhenUnsupported() throws Exception {
         configureStandardMode();
         Settings.KEEP_RECORDINGS = true;
@@ -277,6 +362,30 @@ class ProcessorIntegrationTest {
         } catch (ReflectiveOperationException exception) {
             throw new AssertionError(exception);
         }
+    }
+
+    private AudioFormat parseAudioFormat(Processor processor, String value) throws Exception {
+        var method = Processor.class.getDeclaredMethod("parseAudioFormatString", String.class);
+        method.setAccessible(true);
+        return (AudioFormat) method.invoke(processor, value);
+    }
+
+    private Mixer mixer(Mixer.Info info) {
+        return (Mixer) Proxy.newProxyInstance(Mixer.class.getClassLoader(),
+                new Class<?>[]{Mixer.class}, (proxy, method, args) -> switch (method.getName()) {
+                    case "getTargetLineInfo" ->
+                            new Line.Info[]{new DataLine.Info(TargetDataLine.class, (AudioFormat) null)};
+                    case "getSourceLineInfo" -> new Line.Info[0];
+                    case "getLine" -> new FakeTargetDataLine(
+                            Settings.DEFAULT_AUDIO_FORMAT, new byte[0]);
+                    case "isLineSupported" -> true;
+                    case "getMixerInfo" -> info;
+                    case "getControls" -> new Control[0];
+                    case "isControlSupported", "isOpen", "isRunning", "isActive" -> false;
+                    case "hashCode" -> System.identityHashCode(proxy);
+                    case "equals" -> proxy == args[0];
+                    default -> null;
+                });
     }
 
     private static final class MarkerStub extends AudioMarker {
